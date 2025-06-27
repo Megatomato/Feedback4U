@@ -12,10 +12,9 @@ function LandNav() {
         <Container>
           <Image src={logo} rounded height="50px"/>
           <Navbar.Brand href="#home">Feedback4U</Navbar.Brand>
-          <Nav className="me-auto">
-            <Nav.Link href="#home">Home</Nav.Link>
-            <Nav.Link href="#features">Features</Nav.Link>
+          <Nav className="ms-auto">
             <Nav.Link href="#pricing">Pricing</Nav.Link>
+            <Nav.Link href="#login">Login / Signup</Nav.Link>
           </Nav>
         </Container>
       </Navbar>

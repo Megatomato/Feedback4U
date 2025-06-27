@@ -1,5 +1,7 @@
 import React from "react";
 import LandNav from '../components/Navbar.jsx';
+import FeetDroolEmoji from '../components/Footer.jsx';
+import PricingSection from '../components/Pricing.jsx';
 import { LandSection, LandSectionRight } from '../components/LandSection.jsx';
 
 const Home = () => {
@@ -15,10 +17,17 @@ const Home = () => {
     return (
     <div>
         <LandNav/>
-        <div>
+        <div id="features">
             <LandSection name={firstName} txt={firstTXT}/>
             <LandSectionRight name={seconName} txt={seconTXT}/>
             <LandSection name={thirdName} txt={thirdTXT}/>
+            <LandSectionRight name={thirdName} txt={thirdTXT}/>
+        </div>
+        <div id="pricing">
+            <PricingSection/>
+        </div>
+        <div id="end">
+            <FeetDroolEmoji/>
         </div>
     </div>
     );

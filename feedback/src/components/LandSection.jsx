@@ -47,7 +47,7 @@ function LandSectionRight(props) {
         <Row style={{
         marginTop: "50px",
         marginBottom: "50px",
-    }}>
+        }}>
           <Col>
             <Image src={logo} rounded height="500px"/>
           </Col>
