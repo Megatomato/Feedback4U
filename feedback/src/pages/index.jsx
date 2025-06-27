@@ -1,6 +1,6 @@
 import React from "react";
 import LandNav from '../components/Navbar.jsx';
-import LandSection from '../components/LandSection.jsx';
+import { LandSection, LandSectionRight } from '../components/LandSection.jsx';
 
 const Home = () => {
     const firstName = "Motto";
@@ -15,12 +15,9 @@ const Home = () => {
     return (
     <div>
         <LandNav/>
-        <div style={{
-            width: '75%',
-            margin: '0 auto',
-        }}>
+        <div>
             <LandSection name={firstName} txt={firstTXT}/>
-            <LandSection name={seconName} txt={seconTXT}/>
+            <LandSectionRight name={seconName} txt={seconTXT}/>
             <LandSection name={thirdName} txt={thirdTXT}/>
         </div>
     </div>
