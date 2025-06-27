@@ -1,0 +1,18 @@
+// Custom variables (Rose Pine Dawn)
+$primary:    #286983;   // Pine
+$secondary:  #9893a5;   // Muted
+$success:    #56949f;   // Foam
+$info:       #907aa9;   // Iris
+$warning:    #ea9d34;   // Gold
+$danger:     #b4637a;   // Love
+$light:      #f2e9e1;   // Overlay
+$dark:       #575279;   // Text
+$body-bg:    #faf4ed;   // Base
+$body-color: #575279;   // Text
+
+// Optionally adjust other variables
+$border-radius: 0.25rem;
+$font-family-sans-serif: "Inter", sans-serif; // Custom font (optional)
+
+// Import Bootstrap
+@import "~bootstrap/scss/bootstrap";
