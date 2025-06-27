@@ -21,7 +21,7 @@ function LandSection(props) {
           }}>
             <h1 style={{ fontSize: "3rem", margin: "0.67em 0" }}> {props.name} </h1>
             <p style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
-            <Button variant="primary">Let's Begin</Button>
+            <Button variant="primary" href="#pricing">Let's Begin</Button>
           </div>
         </Col>
         <Col>
@@ -58,9 +58,9 @@ function LandSectionRight(props) {
               flexDirection: 'column',
               justifyContent: 'center',
             }}>
-              <h1 style={{ fontSize: "4rem", margin: "0.67em 0" }}> {props.name} </h1>
+              <h1 style={{ fontSize: "3rem", margin: "0.67em 0" }}> {props.name} </h1>
               <p style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
-              <Button variant="light">Let's Begin</Button>
+              <Button variant="light" href="#pricing">Let's Begin</Button>
             </div>
           </Col>
         </Row>
