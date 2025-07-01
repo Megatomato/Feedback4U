@@ -42,3 +42,13 @@ CREATE TABLE students (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE courses (
+    course_id SERIAL PRIMARY KEY,
+    course_name VARCHAR(255) NOT NULL,
+    course_description VARCHAR(255) NOT NULL,
+    course_is_active BOOLEAN NOT NULL,
+    course_teacher_id INTEGER NOT NULL REFERENCES teachers(teacher_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
