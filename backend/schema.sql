@@ -52,6 +52,13 @@ CREATE TABLE courses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE enrollments (
+    enrollment_id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES students(student_id),
+    course_id INTEGER NOT NULL REFERENCES courses(course_id),
+    enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, course_id)
+);
 
 CREATE TABLE assignments (
     assignment_id SERIAL PRIMARY KEY,
