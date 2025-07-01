@@ -6,7 +6,7 @@ import fitz
 from langchain.text_splitter import CharacterTextSplitter
 
 # Open only PDF file( no Word)
-pdf_file = "BGG - Y10 - 2024 T4.pdf"
+pdf_file = "../../ragdb/training-data/feedback-data/[TEST] PSMT.pdf"
 doc = fitz.open(pdf_file)
 
 text = ""
@@ -28,3 +28,7 @@ text_splitter = SemanticChunker(
 
 docs = text_splitter.create_documents([text])
 print(docs[0].page_content)
+
+# Write chunks to log2.txt
+with open('log2.txt', 'w') as f:
+    f.write(str(docs))

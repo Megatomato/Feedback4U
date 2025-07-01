@@ -1,7 +1,12 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import CharacterTextSplitter
+from langchain.text_splitter import (
+    CharacterTextSplitter,
+    TokenTextSplitter,
+    RecursiveCharacterTextSplitter,
+)
 
-file_path = '../../ragdb/training-data/feedback-data/'
+file_path = '../../ragdb/training-data/feedback-data/[TEST] PSMT.pdf'
 loader = PyPDFLoader(file_path)
 
 pages = loader.load()
