@@ -8,6 +8,9 @@ import Home from './pages';
 import SignupPage from './pages/signup';
 import LoginPage from './pages/login';
 import ForgotPasswordPage from './pages/forgor';
+import CareersPage from './pages/careers';
+import ContactPage from './pages/contact';
+import CatPage from './pages/cat';
 
 function App() {
   return (
@@ -17,6 +20,9 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/cat" element={<CatPage />} />
         {/* Add other routes later */}
       </Routes>
     </Router>
