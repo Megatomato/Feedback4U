@@ -3,6 +3,9 @@ import LandNav from '../components/Navbar.jsx';
 import FeetDroolEmoji from '../components/Footer.jsx';
 import PricingSection from '../components/Pricing.jsx';
 import { LandSection, LandSectionRight } from '../components/LandSection.jsx';
+import inter from '../assets/intergration.jpg';
+import teacher from '../assets/struggle-teacher.jpg';
+import multi from '../assets/multi-choice.jpg';
 
 const Home = () => {
     const firstName = "Motto";
@@ -18,10 +21,10 @@ const Home = () => {
     <div>
         <LandNav/>
         <div id="features">
-            <LandSection name={firstName} txt={firstTXT}/>
-            <LandSectionRight name={seconName} txt={seconTXT}/>
-            <LandSection name={thirdName} txt={thirdTXT}/>
-            <LandSectionRight name={thirdName} txt={thirdTXT}/>
+            <LandSection name={firstName} txt={firstTXT} img={multi}/>
+            <LandSectionRight name={seconName} txt={seconTXT} img={teacher}/>
+            <LandSection name={thirdName} txt={thirdTXT} img={inter}/>
+            <LandSectionRight name={thirdName} txt={thirdTXT} img={inter}/>
         </div>
         <div id="pricing">
             <PricingSection/>

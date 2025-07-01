@@ -14,7 +14,7 @@ function LandNav() {
           <Navbar.Brand href="#home">Feedback4U</Navbar.Brand>
           <Nav className="ms-auto">
             <Nav.Link href="#pricing">Pricing</Nav.Link>
-            <Nav.Link href="#login">Login / Signup</Nav.Link>
+            <Nav.Link href="#login">Login</Nav.Link>
           </Nav>
         </Container>
       </Navbar>

@@ -1,6 +1,5 @@
 import Button from 'react-bootstrap/Button';
 import Image from 'react-bootstrap/Image';
-import logo from '../assets/logo.png';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
 import Container from 'react-bootstrap/Container';
@@ -11,21 +10,23 @@ function LandSection(props) {
             paddingTop: "50px",
             paddingBottom: "50px",
         }}>
-      <Row>
+      <Row style={{
+        marginTop: "50px",
+        marginBottom: "50px",
+        }}>
         <Col>
           <div style={{
-            width: '60%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
           }}>
             <h1 style={{ fontSize: "3rem", margin: "0.67em 0" }}> {props.name} </h1>
-            <p style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
+            <p class="text-justify" style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
             <Button variant="primary" href="#pricing">Let's Begin</Button>
           </div>
         </Col>
         <Col>
-          <Image src={logo} rounded height="500px"/>
+          <Image src={props.img} rounded height="500px"/>
         </Col>
       </Row>
     </Container>
@@ -49,17 +50,16 @@ function LandSectionRight(props) {
         marginBottom: "50px",
         }}>
           <Col>
-            <Image src={logo} rounded height="500px"/>
+            <Image src={props.img} rounded height="500px"/>
           </Col>
           <Col>
             <div style={{
-              width: '60%',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
             }}>
               <h1 style={{ fontSize: "3rem", margin: "0.67em 0" }}> {props.name} </h1>
-              <p style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
+              <p class="text-jusitfy" style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
               <Button variant="light" href="#pricing">Let's Begin</Button>
             </div>
           </Col>

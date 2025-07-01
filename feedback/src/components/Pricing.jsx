@@ -24,7 +24,10 @@ function PricingSection() {
               justifyContent: 'center',
         }}>
           <h1>Pricing</h1>
-          <Row>
+          <Row style={{
+            marginTop: "50px",
+            marginBottom: "50px",
+            }}>
             <Col>
               <PricingCard name={"Home School Package"} desc={"Perfect for home schooling!"} price={"9.99"} features={firstFeature}/>
             </Col>
