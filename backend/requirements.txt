@@ -1,13 +1,15 @@
-langchain
-langchain-community
-langchain-experimental
-langchain-openai
-langchain-text-splitters
-
-openai
-torch
-
-pyopencl
-
 PyMuPDF
-pypdf
+python-dotenv
+SQLAlchemy
+pgvector
+langchain-openai
+# langchain_google_genai
+# langchain_community
+# deepinfra
+langchain
+langchain_experimental
+psycopg2-binary
+openai
+# pyopencl
+# torch
+numpy
