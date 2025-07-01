@@ -12,7 +12,6 @@ CREATE TABLE admin (
     subscription_status VARCHAR(255) NOT NULL,
     subscription_renewal_date TIMESTAMP NOT NULL,
     subscription_renewal_status VARCHAR(255) NOT NULL,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -23,7 +22,8 @@ CREATE TABLE teachers (
     teacher_name VARCHAR(255) NOT NULL,
     teacher_phone_number VARCHAR(255) NOT NULL,
     teacher_password_hash VARCHAR(255) NOT NULL,
-    teacher_is_working BOOLEAN NOT NULL,
+    teacher_is_active BOOLEAN NOT NULL,
+    school_admin_id INTEGER NOT NULL REFERENCES admin(admin_id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -36,6 +36,9 @@ CREATE TABLE students (
     student_password_hash VARCHAR(255) NOT NULL,
     student_average_grade INTEGER NOT NULL,
     student_is_studying BOOLEAN NOT NULL,
+    assigned_teacher_id INTEGER NOT NULL REFERENCES teachers(teacher_id),
+    school_admin_id INTEGER NOT NULL REFERENCES admin(admin_id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
