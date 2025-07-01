@@ -12,13 +12,9 @@ CREATE TABLE admin (
     subscription_status VARCHAR(255) NOT NULL,
     subscription_renewal_date TIMESTAMP NOT NULL,
     subscription_renewal_status VARCHAR(255) NOT NULL,
-    subscription_renewal_amount VARCHAR(255) NOT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-
-
 );
 
 CREATE TABLE teachers (
@@ -38,7 +34,7 @@ CREATE TABLE students (
     student_name VARCHAR(255) NOT NULL,
     student_phone_number VARCHAR(255) NOT NULL,
     student_password_hash VARCHAR(255) NOT NULL,
-    student_grade BOOLEAN NOT NULL,
+    student_average_grade INTEGER NOT NULL,
     student_is_studying BOOLEAN NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
