@@ -32,3 +32,14 @@ CREATE TABLE teachers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE students (
+    student_id SERIAL PRIMARY KEY,
+    student_email VARCHAR(255) UNIQUE NOT NULL,
+    student_name VARCHAR(255) NOT NULL,
+    student_phone_number VARCHAR(255) NOT NULL,
+    student_password_hash VARCHAR(255) NOT NULL,
+    student_grade BOOLEAN NOT NULL,
+    student_is_studying BOOLEAN NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
