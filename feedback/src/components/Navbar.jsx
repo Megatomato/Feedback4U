@@ -11,10 +11,10 @@ function LandNav() {
       <Navbar bg="primary" data-bs-theme="dark">
         <Container>
           <Image src={logo} rounded height="50px"/>
-          <Navbar.Brand href="#home">Feedback4U</Navbar.Brand>
+          <Navbar.Brand href="/">Feedback4U</Navbar.Brand>
           <Nav className="ms-auto">
             <Nav.Link href="#pricing">Pricing</Nav.Link>
-            <Nav.Link href="#login">Login</Nav.Link>
+            <Nav.Link href="/signup">Login</Nav.Link>
           </Nav>
         </Container>
       </Navbar>
