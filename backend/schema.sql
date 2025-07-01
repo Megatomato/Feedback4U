@@ -64,7 +64,7 @@ CREATE TABLE assignments (
     assignment_name VARCHAR(255) NOT NULL,
     assignment_description VARCHAR(255) NOT NULL,
     assignment_due_date TIMESTAMP NOT NULL,
-    assignment_is_completed BOOLEAN NOT NULL,
+    assignment_status VARCHAR(50) DEFAULT 'active' CHECK (assignment_status IN ('draft', 'active', 'closed')),
     assignment_course_id INTEGER NOT NULL REFERENCES courses(course_id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -74,10 +74,11 @@ CREATE TABLE submitted_assignments (
     submitted_assignment_id SERIAL PRIMARY KEY,
     submitted_assignment_student_id INTEGER NOT NULL REFERENCES students(student_id),
     submitted_assignment_assignment_id INTEGER NOT NULL REFERENCES assignments(assignment_id),
-    is_graded BOOLEAN NOT NULL,
-    grade DECIMAL(5, 2),
+    submission_status VARCHAR(50) DEFAULT 'submitted' CHECK (submission_status IN ('submitted', 'graded')),
     ai_feedback TEXT,
+    ai_grade DECIMAL(5, 2),    
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    graded_at TIMESTAMP,
 );
 
 -- Performance indexes
