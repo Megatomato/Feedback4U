@@ -10,7 +10,7 @@ function LandNav() {
     <>
       <Navbar bg="primary" data-bs-theme="dark">
         <Container>
-          <Image src={logo} rounded height="50px"/>
+          <Image src={logo} rounded height="35px"/>
           <Navbar.Brand href="/">Feedback4U</Navbar.Brand>
           <Nav className="ms-auto">
             <Nav.Link href="#pricing">Pricing</Nav.Link>

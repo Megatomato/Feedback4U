@@ -13,7 +13,11 @@
     {
       devShells.default = pkgs.mkShell {
         packages = [
-          pkgs.nodejs_24
+            pkgs.nodejs_24
+            pkgs.python313Packages.openai
+            pkgs.python313Packages.sqlalchemy
+            pkgs.python313Packages.pgvector
+            pkgs.python313Packages.psycopg2-binary
         ];
       };
     });
