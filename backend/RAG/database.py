@@ -12,21 +12,26 @@ import pgvector.sqlalchemy
 from backend.RAG.preprocessing.preprocessing2 import run as semantic_chunker
 from backend.RAG.preprocessing.preprocessing import run as recursive_chunker
 from sqlalchemy import text as sqltext
+from sentence_transformers import SentenceTransformer
 
 
-# Embedding providers
+# # Embedding providers
 from langchain_openai import OpenAIEmbeddings
-# from langchain_google_genai import GoogleGenerativeAIEmbeddings  # gemini
+from langchain_google_genai import GoogleGenerativeAIEmbeddings  # gemini
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
 # from langchain_community.embeddings import DeepInfraEmbeddings    # deepseek (HF on DeepInfra)
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # ---------------------------------------------------------------------
 load_dotenv()
 
 DB_URL          = os.getenv("DATABASE_URL")
 OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
-GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY")
+# GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY")
 DEEPSEEK_API_KEY= os.getenv("DEEPSEEK_API_KEY")
+QWEN_API_KEY = os.getenv("QWEN_API_KEY") 
+
 
 
 Base = declarative_base(metadata=MetaData())
@@ -58,9 +63,7 @@ class Feedback(Base):
     course_id     = Column(Text, nullable=False)
     data          = Column(Text, nullable=False)   
 
-# ---------------------------------------------------------------------
-# 2. Embedding back‑end abstraction
-# ---------------------------------------------------------------------
+
 class EmbeddingModel:
     """Factory that hides vendor differences. Call .embed(texts: list[str])."""
 
@@ -72,22 +75,17 @@ class EmbeddingModel:
             self.dimensions = 1536
         elif provider == "gemini":
             # self.model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GEMINI_API_KEY)
-            raise NotImplementedError("Gemini embeddings stubbed - install langchain-google-genai")
-        elif provider == "deepseek":
-            # Example model; adjust to your DeepSeek HF repo
-            # self.model = DeepInfraEmbeddings(model_id="sentence-transformers/all-MiniLM-L6-v2", api_key=DEEPSEEK_API_KEY)
-            raise NotImplementedError("DeepSeek embeddings stubbed - install deepinfra client")
+            raise NotImplementedError("No Gemini API key yet")
         else:
-            raise ValueError(f"Unknown embedder provider: {provider}")
+            self.model = HuggingFaceEmbeddings(model_name="Qwen/Qwen3-Embedding-0.6B")
 
     # unified API ------------------------------------------------------
     def embed(self, texts: List[str]) -> List[List[float]]:
-        """Return list of vectors (batch‑friendly)."""
         if hasattr(self.model, "embed_documents"):
             return self.model.embed_documents(texts)
         elif hasattr(self.model, "embed"):
-            return self.model.embed(texts)  # type: ignore
-        else:  # fallback – embed one by one (slow)
+            return self.model.embed(texts)  
+        else:  
             return [self.model.embed_query(t) for t in texts]
 
 
@@ -109,8 +107,6 @@ def extract_text(file_path: str) -> str:
 # ---------------------------------------------------------------------
 # 5.  Helper: fetch top‑k with pgvector HNSW via text SQL
 # ---------------------------------------------------------------------
-
-
 
 def topk_assignment(session, assignment_id: str, query_vec: List[float], k: int = 4):
     stmt = sqltext(
@@ -139,9 +135,6 @@ def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4):
     rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}).fetchall()
     return [r[0] for r in rows]
 
-# ---------------------------------------------------------------------
-# 6.  Main ingestion routine
-# ---------------------------------------------------------------------
 
 def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: str,
                         chunker: str, embedder_name: str):
@@ -163,7 +156,7 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
     else:  # preprocessing scripts might return list[dict]
         chunks = [c["content"] if isinstance(c, dict) else str(c) for c in splitter_texts]
 
-    vectors = embedder.embed(chunks)  # batch embedding
+    vectors = embedder.embed(chunks)
 
     objects = [
         AssignmentChunk(student_id=student_id,

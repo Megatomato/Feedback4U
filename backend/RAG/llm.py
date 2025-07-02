@@ -17,10 +17,6 @@ logging.basicConfig(level=logging.INFO)
 DB_URL = os.getenv("DATABASE_URL")
 
 def generate_and_store_feedback(student_id: str, assignment_id: str, course_id: str, qvec: list[float]):
-    """
-    Generates feedback using an LLM based on assignment and rubric context,
-    then stores it in the database.
-    """
     engine = create_engine(DB_URL)
     Session = sessionmaker(bind=engine)
 

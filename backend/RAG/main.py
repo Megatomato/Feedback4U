@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--assignment", required=True, help="Assignment ID / name")
     parser.add_argument("--course", required=True, help="Course ID, e.g. BIO101")
     parser.add_argument("--chunker", choices=["recursive", "semantic"], default="recursive")
-    parser.add_argument("--embedder", choices=["openai", "gemini", "deepseek"], default="openai")
+    parser.add_argument("--embedder", choices=["openai", "gemini", "qwen"], default="qwen")
     args = parser.parse_args()
 
     logging.info("Starting ingestion...")
