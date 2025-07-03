@@ -12,7 +12,7 @@ import os
 from typing import Optional, List
 
 # Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://feedback_user:feedback_password@localhost:5432/feedback4u")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://rag_user:super_secure_pw@localhost:5433/rag_db")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -76,7 +76,6 @@ class Student(Base):
     student_password_hash = Column(String(255), nullable=False)
     student_average_grade = Column(Integer, nullable=False)
     student_is_studying = Column(Boolean, nullable=False)
-    assigned_teacher_id = Column(Integer, ForeignKey("teachers.teacher_id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
@@ -215,7 +214,6 @@ async def register_student(user: UserCreate, db: Session = Depends(get_db)):
         student_password_hash=get_password_hash(user.password),
         student_average_grade=0,
         student_is_studying=True,
-        assigned_teacher_id=1  # Default teacher - should be updated
     )
     db.add(db_student)
     db.commit()

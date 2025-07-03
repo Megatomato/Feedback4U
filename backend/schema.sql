@@ -36,7 +36,6 @@ CREATE TABLE students (
     student_password_hash VARCHAR(255) NOT NULL,
     student_average_grade INTEGER NOT NULL,
     student_is_studying BOOLEAN NOT NULL,
-    assigned_teacher_id INTEGER NOT NULL REFERENCES teachers(teacher_id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
