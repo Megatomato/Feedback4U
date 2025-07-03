@@ -76,7 +76,7 @@ CREATE TABLE submitted_assignments (
     submitted_assignment_assignment_id INTEGER NOT NULL REFERENCES assignments(assignment_id),
     submission_status VARCHAR(50) DEFAULT 'submitted' CHECK (submission_status IN ('submitted', 'graded')),
     ai_feedback TEXT,
-    ai_grade DECIMAL(5, 2),
+    ai_grade DECIMAL(5, 2)[],
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     graded_at TIMESTAMP
 );
