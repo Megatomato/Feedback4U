@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, DECIMAL, Text
+from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, DECIMAL, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from pydantic import BaseModel, EmailStr
@@ -69,7 +69,8 @@ class Teacher(Base):
 
 class Student(Base):
     __tablename__ = "students"
-    student_id = Column(Integer, primary_key=True)
+    student_id = Column(Integer, nullable=False)
+    school_student_id = Column(Integer, nullable=False)
     student_email = Column(String(255), unique=True, nullable=False)
     student_name = Column(String(255), nullable=False)
     student_phone_number = Column(String(255), nullable=False)
@@ -78,6 +79,7 @@ class Student(Base):
     student_is_studying = Column(Boolean, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (PrimaryKeyConstraint('student_id', 'school_student_id', name='pk_student'),)
 
 class Course(Base):
     __tablename__ = "courses"
