@@ -7,6 +7,8 @@ import './custom.scss';
 import Home from './pages';
 import SignupPage from './pages/signup';
 import LoginPage from './pages/login';
+import AdminDashPage from './pages/admin-dashboard'
+
 import ForgotPasswordPage from './pages/forgor';
 import CareersPage from './pages/careers';
 import ContactPage from './pages/contact';
@@ -19,11 +21,16 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashPage />} />
+        {/* Add other routes later */}
+
+
+
+        {/* Not important routes */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/careers" element={<CareersPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/cat" element={<CatPage />} />
-        {/* Add other routes later */}
       </Routes>
     </Router>
   );

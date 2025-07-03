@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col, Alert, Card } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 
-import Navbar from '../components/Navbar.jsx'
+import { LandNav } from '../components/Navbar.jsx'
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -55,7 +55,7 @@ const LoginPage = () => {
 
   return (
     <div>
-    <Navbar/>
+    <LandNav/>
     <Container className="py-5">
       <Row className="justify-content-center">
         <Col md={8} lg={6} xl={5}>

@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/Button';
 
 function FeetDroolEmoji() {
   return (
-    <div style={{
+    <footer className="fixed-bottom" style={{
        background: "#286983",
        color: "#faf4ed",
     }}>
@@ -50,7 +50,7 @@ function FeetDroolEmoji() {
 
         </Row>
       </Container>
-    </div>
+    </footer>
   );
 }
 

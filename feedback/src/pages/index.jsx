@@ -1,5 +1,5 @@
 import React from "react";
-import LandNav from '../components/Navbar.jsx';
+import { LandNav } from '../components/Navbar.jsx';
 import FeetDroolEmoji from '../components/Footer.jsx';
 import PricingSection from '../components/Pricing.jsx';
 import { LandSection, LandSectionRight } from '../components/LandSection.jsx';
