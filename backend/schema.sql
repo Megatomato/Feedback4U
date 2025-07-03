@@ -71,7 +71,7 @@ CREATE TABLE assignments (
 );
 
 CREATE TABLE submitted_assignments (
-    submitted_assignment_id SERIAL PRIMARY KEY,
+    submission_id SERIAL PRIMARY KEY,
     submitted_assignment_student_id INTEGER NOT NULL REFERENCES students(student_id),
     submitted_assignment_assignment_id INTEGER NOT NULL REFERENCES assignments(assignment_id),
     submission_status VARCHAR(50) DEFAULT 'submitted' CHECK (submission_status IN ('submitted', 'graded')),
