@@ -13,3 +13,8 @@ openai
 # pyopencl
 # torch
 numpy
+
+sentence-transformers
+
+langchain-huggingface
+pypdf

@@ -12,15 +12,20 @@ import pgvector.sqlalchemy
 from backend.RAG.preprocessing.preprocessing2 import run as semantic_chunker
 from backend.RAG.preprocessing.preprocessing import run as recursive_chunker
 from sqlalchemy import text as sqltext
-from sentence_transformers import SentenceTransformer
 
 
 # # Embedding providers
+# Always import the OpenAI implementation – tests patch the *origin* library path.
 from langchain_openai import OpenAIEmbeddings
-from langchain_google_genai import GoogleGenerativeAIEmbeddings  # gemini
-from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain_google_genai import GoogleGenerativeAIEmbeddings  # gemini
 
-# from langchain_community.embeddings import DeepInfraEmbeddings    # deepseek (HF on DeepInfra)
+# Import the HuggingFace implementation **only if** it has not been monkey-patched already.
+# This allows pytest mocks like `@patch('backend.RAG.database.HuggingFaceEmbeddings')` to
+# survive an `importlib.reload(database)` that the test suite performs. Without the guard
+# the reload would overwrite the mock with the real class, leading to network calls when
+# the model initialises and ultimately to the failing OSError observed in the tests.
+if "HuggingFaceEmbeddings" not in globals():
+    from langchain_huggingface import HuggingFaceEmbeddings
 # from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # ---------------------------------------------------------------------
@@ -156,6 +161,7 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
     else:  # preprocessing scripts might return list[dict]
         chunks = [c["content"] if isinstance(c, dict) else str(c) for c in splitter_texts]
 
+    chunks = [chunk.replace('\x00', '') for chunk in chunks]
     vectors = embedder.embed(chunks)
 
     objects = [
@@ -173,3 +179,40 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
 
     logging.info("Ingestion complete for %s", file_path)
     return vectors[0] if vectors else None
+
+
+def ingest_reference_file(file_path: str, course_id: str, doc_type: str,
+                          chunker: str, embedder_name: str):
+    # -- setup DB session
+    engine  = create_engine(DB_URL)
+    Session = sessionmaker(bind=engine)
+    with Session.begin() as session:
+        # ensure pgvector extension
+        try:
+            session.execute(sqltext('CREATE EXTENSION IF NOT EXISTS vector'))
+        except ProgrammingError:
+            session.rollback()
+        Base.metadata.create_all(engine)
+
+    embedder = EmbeddingModel(embedder_name)
+    splitter_texts: List[str] = run_chunker(file_path, chunker)
+    if isinstance(splitter_texts, list) and isinstance(splitter_texts[0], str):
+        chunks = splitter_texts
+    else:  # preprocessing scripts might return list[dict]
+        chunks = [c["content"] if isinstance(c, dict) else str(c) for c in splitter_texts]
+
+    chunks = [chunk.replace('\x00', '') for chunk in chunks]
+    vectors = embedder.embed(chunks)
+
+    objects = [
+        ReferenceChunk(course_id=course_id,
+                       doc_type=doc_type,
+                       content=txt,
+                       embedding=vec)
+        for txt, vec in zip(chunks, vectors)
+    ]
+
+    with Session.begin() as session:
+        session.bulk_save_objects(objects)
+
+    logging.info("Reference ingestion complete for %s", file_path)
