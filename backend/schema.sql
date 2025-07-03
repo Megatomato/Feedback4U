@@ -29,7 +29,8 @@ CREATE TABLE teachers (
 );
 
 CREATE TABLE students (
-    student_id SERIAL PRIMARY KEY,
+    student_id SERIAL,
+    school_student_id INTEGER NOT NULL,
     student_email VARCHAR(255) UNIQUE NOT NULL,
     student_name VARCHAR(255) NOT NULL,
     student_phone_number VARCHAR(255) NOT NULL,
@@ -37,7 +38,8 @@ CREATE TABLE students (
     student_average_grade INTEGER NOT NULL,
     student_is_studying BOOLEAN NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (student_id, school_student_id)
 );
 
 CREATE TABLE courses (
