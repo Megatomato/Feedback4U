@@ -82,7 +82,6 @@ CREATE TABLE submitted_assignments (
 
 -- Performance indexes
 CREATE INDEX idx_teachers_school_admin ON teachers(school_admin_id);
-CREATE INDEX idx_students_teacher ON students(assigned_teacher_id);
 CREATE INDEX idx_courses_teacher ON courses(course_teacher_id);
 CREATE INDEX idx_assignments_course ON assignments(assignment_course_id);
 
