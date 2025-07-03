@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, DECIMAL, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
-from pydantic import BaseModel
-from datetime import datetime
+from pydantic import BaseModel, EmailStr
+from passlib.context import CryptContext
+from jose import jwt, JWTError
+from datetime import datetime, timedelta
 import os
 from typing import Optional, List
 
@@ -13,6 +16,14 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://feedback_user:feedback_pa
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# Security setup
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 # FastAPI app
 app = FastAPI(title="Feedback4U API", version="1.0.0")
@@ -69,7 +80,42 @@ class Student(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
-# Pydantic schemas for API requests/responses
+class Course(Base):
+    __tablename__ = "courses"
+    course_id = Column(Integer, primary_key=True)
+    course_name = Column(String(255), nullable=False)
+    course_description = Column(String(255), nullable=False)
+    course_is_active = Column(Boolean, nullable=False)
+    course_teacher_id = Column(Integer, ForeignKey("teachers.teacher_id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+class Assignment(Base):
+    __tablename__ = "assignments"
+    assignment_id = Column(Integer, primary_key=True)
+    assignment_name = Column(String(255), nullable=False)
+    assignment_description = Column(String(255), nullable=False)
+    assignment_due_date = Column(DateTime, nullable=False)
+    assignment_status = Column(String(50), default='active')
+    assignment_course_id = Column(Integer, ForeignKey("courses.course_id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+# Pydantic schemas
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    phone_number: str
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    
+    class Config:
+        from_attributes = True
+
 class StudentResponse(BaseModel):
     student_id: int
     student_name: str
@@ -89,6 +135,27 @@ class TeacherResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+# Utility functions
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
 # Dependency to get database session
 def get_db():
     db = SessionLocal()
@@ -97,24 +164,128 @@ def get_db():
     finally:
         db.close()
 
+# Authentication dependency
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        user_type: str = payload.get("type")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    if user_type == "student":
+        user = db.query(Student).filter(Student.student_id == int(user_id)).first()
+    elif user_type == "teacher":
+        user = db.query(Teacher).filter(Teacher.teacher_id == int(user_id)).first()
+    elif user_type == "admin":
+        user = db.query(Admin).filter(Admin.admin_id == int(user_id)).first()
+    else:
+        raise credentials_exception
+        
+    if user is None:
+        raise credentials_exception
+    return user
+
 # API Routes
 @app.get("/")
 async def root():
     return {"message": "Feedback4U API is running"}
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+# Authentication routes
+@app.post("/auth/register/student", response_model=UserResponse)
+async def register_student(user: UserCreate, db: Session = Depends(get_db)):
+    if db.query(Student).filter(Student.student_email == user.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    db_student = Student(
+        student_email=user.email,
+        student_name=user.name,
+        student_phone_number=user.phone_number,
+        student_password_hash=get_password_hash(user.password),
+        student_average_grade=0,
+        student_is_studying=True,
+        assigned_teacher_id=1  # Default teacher - should be updated
+    )
+    db.add(db_student)
+    db.commit()
+    db.refresh(db_student)
+    
+    return UserResponse(
+        id=db_student.student_id,
+        email=db_student.student_email,
+        name=db_student.student_name
+    )
+
+@app.post("/auth/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Try to find user in each table
+    user = None
+    user_type = None
+    user_id = None
+    
+    # Check students
+    student = db.query(Student).filter(Student.student_email == form_data.username).first()
+    if student and verify_password(form_data.password, student.student_password_hash):
+        user = student
+        user_type = "student"
+        user_id = student.student_id
+    
+    # Check teachers
+    if not user:
+        teacher = db.query(Teacher).filter(Teacher.teacher_email == form_data.username).first()
+        if teacher and verify_password(form_data.password, teacher.teacher_password_hash):
+            user = teacher
+            user_type = "teacher"
+            user_id = teacher.teacher_id
+    
+    # Check admins
+    if not user:
+        admin = db.query(Admin).filter(Admin.admin_email == form_data.username).first()
+        if admin and verify_password(form_data.password, admin.admin_password_hash):
+            user = admin
+            user_type = "admin"
+            user_id = admin.admin_id
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(user_id), "type": user_type},
+        expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# Protected routes
 @app.get("/students", response_model=List[StudentResponse])
-async def get_students(db: Session = Depends(get_db)):
+async def get_students(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
     students = db.query(Student).all()
     return students
 
 @app.get("/teachers", response_model=List[TeacherResponse])
-async def get_teachers(db: Session = Depends(get_db)):
+async def get_teachers(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
     teachers = db.query(Teacher).all()
     return teachers
 
-@app.get("/students/{student_id}", response_model=StudentResponse)
-async def get_student(student_id: int, db: Session = Depends(get_db)):
-    student = db.query(Student).filter(Student.student_id == student_id).first()
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-    return student
+@app.get("/me")
+async def get_current_user_info(current_user = Depends(get_current_user)):
+    return current_user
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
