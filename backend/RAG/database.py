@@ -17,6 +17,7 @@ from sqlalchemy import text as sqltext
 # # Embedding providers
 # Always import the OpenAI implementation – tests patch the *origin* library path.
 from langchain_openai import OpenAIEmbeddings
+from backend.RAG.gitee_embeddings import GiteeAIEmbeddings
 # from langchain_google_genai import GoogleGenerativeAIEmbeddings  # gemini
 
 # Import the HuggingFace implementation **only if** it has not been monkey-patched already.
@@ -35,7 +36,7 @@ DB_URL          = os.getenv("DATABASE_URL")
 OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
 # GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY")
 DEEPSEEK_API_KEY= os.getenv("DEEPSEEK_API_KEY")
-QWEN_API_KEY = os.getenv("QWEN_API_KEY") 
+GITEE_API_KEY = os.getenv("GITEE_API_KEY") 
 
 
 
@@ -49,7 +50,7 @@ class AssignmentChunk(Base):
     course_id     = Column(Text,  nullable=False)
     chunk_no      = Column(Integer, nullable=False)
     content       = Column(Text, nullable=False)
-    embedding     = Column(pgvector.sqlalchemy.Vector(1536), nullable=False)
+    embedding     = Column(pgvector.sqlalchemy.Vector(), nullable=False)   # no argument
 
 class ReferenceChunk(Base):
     __tablename__ = "reference_chunks"          
@@ -58,7 +59,7 @@ class ReferenceChunk(Base):
     doc_type      = Column(Text,  nullable=False)  
     heading_path  = Column(Text)
     content       = Column(Text, nullable=False)
-    embedding     = Column(pgvector.sqlalchemy.Vector(1536), nullable=False)
+    embedding     = Column(pgvector.sqlalchemy.Vector(), nullable=False)
 
 class Feedback(Base):
     __tablename__ = "feedback"
@@ -81,8 +82,15 @@ class EmbeddingModel:
         elif provider == "gemini":
             # self.model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GEMINI_API_KEY)
             raise NotImplementedError("No Gemini API key yet")
+        elif provider == "gitee":
+            self.model = GiteeAIEmbeddings()
         else:
-            self.model = HuggingFaceEmbeddings(model_name="Qwen/Qwen3-Embedding-0.6B")
+            self.model = HuggingFaceEmbeddings(
+                model_name="Qwen/Qwen3-Embedding-0.6B",
+                model_kwargs={"device": "cpu"},        
+                encode_kwargs={"batch_size": 8},       
+            )
+            self.dimensions = 1024
 
     # unified API ------------------------------------------------------
     def embed(self, texts: List[str]) -> List[List[float]]:
@@ -140,20 +148,20 @@ def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4):
     rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}).fetchall()
     return [r[0] for r in rows]
 
-
 def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: str,
                         chunker: str, embedder_name: str):
     # -- setup DB session
     engine  = create_engine(DB_URL)
-    Session = sessionmaker(bind=engine)
-    with Session.begin() as session:
-        # ensure pgvector extension
-        try:
-            session.execute(sqltext('CREATE EXTENSION IF NOT EXISTS vector'))
-        except ProgrammingError:
-            session.rollback()
-        Base.metadata.create_all(engine)
 
+    with engine.begin() as conn:
+        try:
+            conn.execute(sqltext("CREATE EXTENSION IF NOT EXISTS vector"))
+        except ProgrammingError: 
+            raise
+
+    Base.metadata.create_all(engine)
+
+    Session = sessionmaker(bind=engine)
     embedder = EmbeddingModel(embedder_name)
     splitter_texts: List[str] = run_chunker(file_path, chunker)
     if isinstance(splitter_texts, list) and isinstance(splitter_texts[0], str):
@@ -185,15 +193,16 @@ def ingest_reference_file(file_path: str, course_id: str, doc_type: str,
                           chunker: str, embedder_name: str):
     # -- setup DB session
     engine  = create_engine(DB_URL)
-    Session = sessionmaker(bind=engine)
-    with Session.begin() as session:
-        # ensure pgvector extension
-        try:
-            session.execute(sqltext('CREATE EXTENSION IF NOT EXISTS vector'))
-        except ProgrammingError:
-            session.rollback()
-        Base.metadata.create_all(engine)
 
+    with engine.begin() as conn:
+        try:
+            conn.execute(sqltext("CREATE EXTENSION IF NOT EXISTS vector"))
+        except ProgrammingError: 
+            raise
+
+    Base.metadata.create_all(engine)
+
+    Session = sessionmaker(bind=engine)
     embedder = EmbeddingModel(embedder_name)
     splitter_texts: List[str] = run_chunker(file_path, chunker)
     if isinstance(splitter_texts, list) and isinstance(splitter_texts[0], str):

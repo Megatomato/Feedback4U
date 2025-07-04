@@ -61,7 +61,7 @@ def main():
     parser_upload.add_argument("--course", required=True, help="Course ID, e.g. 'MATH101'.")
     parser_upload.add_argument("--doctype", required=True, help="Type of document (e.g., 'rubric', 'exemplar').")
     parser_upload.add_argument("--chunker", choices=["recursive", "semantic"], default="recursive", help="Chunking strategy.")
-    parser_upload.add_argument("--embedder", choices=["openai", "gemini", "qwen"], default="qwen", help="Embedding model.")
+    parser_upload.add_argument("--embedder", choices=["openai", "gemini", "gitee"], default="gitee", help="Embedding model.")
     parser_upload.set_defaults(func=handle_upload_reference)
 
     # --- Sub-parser for getting feedback on an assignment ---
@@ -71,7 +71,7 @@ def main():
     parser_feedback.add_argument("--assignment", required=True, help="Assignment ID / name.")
     parser_feedback.add_argument("--course", required=True, help="Course ID, e.g. 'MATH101'.")
     parser_feedback.add_argument("--chunker", choices=["recursive", "semantic"], default="recursive", help="Chunking strategy.")
-    parser_feedback.add_argument("--embedder", choices=["openai", "gemini", "qwen"], default="qwen", help="Embedding model.")
+    parser_feedback.add_argument("--embedder", choices=["openai", "gemini", "gitee"], default="gitee", help="Embedding model.")
     parser_feedback.set_defaults(func=handle_get_feedback)
 
     args = parser.parse_args()
