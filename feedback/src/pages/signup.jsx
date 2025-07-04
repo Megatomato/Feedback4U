@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col, Alert, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar.jsx'
+import Navbar from '../components/Navbar.jsx';
+import { useAuth } from '../context/AuthContext';
 
 const SignupPage = () => {
   const navigate = useNavigate();
+  const { registerAdmin } = useAuth();
 
   // NOTE: the data that is being sent
   const [formData, setFormData] = useState({
@@ -18,6 +20,7 @@ const SignupPage = () => {
   const [validated, setValidated] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,20 +40,31 @@ const SignupPage = () => {
       return;
     }
 
+    // Check password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setIsSubmitting(true);
+    setError('');
 
     try {
-      // NOTE: API call would be here
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = await registerAdmin(formData);
+      
+      if (result.success) {
+        console.log('Admin registered successfully:', result.user);
+        setSubmitSuccess(true);
+        setValidated(true);
 
-      console.log('Form submitted:', formData);
-      setSubmitSuccess(true);
-      setValidated(true);
-
-      // Redirect after successful signup
-      setTimeout(() => navigate('/dashboard'), 2000);
+        // Redirect after successful signup
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setError(result.error);
+      }
     } catch (error) {
       console.error('Signup error:', error);
+      setError('Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,10 +99,15 @@ const SignupPage = () => {
                 {submitSuccess ? (
                   <Alert variant="success" className="text-center">
                     <Alert.Heading>Account Created Successfully!</Alert.Heading>
-                    <p>Welcome aboard! Redirecting you to your dashboard...</p>
+                    <p>Welcome aboard! Redirecting you to the login page...</p>
                   </Alert>
                 ) : (
                   <>
+                    {error && (
+                      <Alert variant="danger" onClose={() => setError('')} dismissible>
+                        {error}
+                      </Alert>
+                    )}
 
                     <Form noValidate validated={validated} onSubmit={handleSubmit}>
                       <Form.Group controlId="schoolName" className="mb-3">

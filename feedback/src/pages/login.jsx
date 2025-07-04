@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col, Alert, Card } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 
-import Navbar from '../components/Navbar.jsx'
+import Navbar from '../components/Navbar.jsx';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
+  const { login, getUserType } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -37,17 +39,32 @@ const LoginPage = () => {
     setError('');
 
     try {
-      // NOTE: The actual API call will go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Replace with actual authentication logic
-      console.log('Login attempt:', formData);
-
-      // NOTE: this may be an if to deal with student / admin / teacher or a redirect when
-            // at dash?
-      navigate('/dashboard');
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        console.log('Login successful:', result.user);
+        
+        // Redirect based on user type
+        const userType = getUserType();
+        switch (userType) {
+          case 'admin':
+            navigate('/admin/dashboard');
+            break;
+          case 'teacher':
+            navigate('/teacher/dashboard');
+            break;
+          case 'student':
+            navigate('/student/dashboard');
+            break;
+          default:
+            navigate('/dashboard');
+        }
+      } else {
+        setError(result.error);
+      }
     } catch (err) {
-      setError('Invalid email or password');
+      console.error('Login error:', err);
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
