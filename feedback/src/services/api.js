@@ -38,8 +38,8 @@ export const authAPI = {
       school_name: data.schoolName,
       email: data.email,
       password: data.password,
-      admin_name: data.adminName || 'Admin User',
-      admin_phone_number: data.phoneNumber || '000-000-0000',
+      admin_name: 'Admin User', // Default admin name since form doesn't collect this
+      admin_phone_number: '000-000-0000', // Default phone since form doesn't collect this
       plan: data.plan
     };
     return api.post('/auth/register/admin', payload);
