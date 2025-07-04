@@ -1,24 +1,23 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, DECIMAL, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
-from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 import os
 from typing import Optional, List
 
-# Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://rag_user:super_secure_pw@localhost:5433/rag_db")
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+# Import database models and schemas
+from database import (
+    Admin, Teacher, Student, Course, Assignment,
+    UserCreate, AdminCreate, UserResponse, AdminResponse, 
+    StudentResponse, TeacherResponse, Token,
+    get_db
+)
 
 # Security setup
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-productionx")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -37,109 +36,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database Models (matching your schema)
-class Admin(Base):
-    __tablename__ = "admin"
-    admin_id = Column(Integer, primary_key=True)
-    school_name = Column(String(255), nullable=False)
-    admin_email = Column(String(255), unique=True, nullable=False)
-    admin_name = Column(String(255), nullable=False)
-    admin_password_hash = Column(String(255), nullable=False)
-    admin_phone_number = Column(String(255), nullable=False)
-    subscription_type = Column(String(255), nullable=False)
-    subscription_start_date = Column(DateTime, nullable=False)
-    subscription_end_date = Column(DateTime, nullable=False)
-    subscription_status = Column(String(255), nullable=False)
-    subscription_renewal_date = Column(DateTime, nullable=False)
-    subscription_renewal_status = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
-class Teacher(Base):
-    __tablename__ = "teachers"
-    teacher_id = Column(Integer, primary_key=True)
-    teacher_email = Column(String(255), unique=True, nullable=False)
-    teacher_name = Column(String(255), nullable=False)
-    teacher_phone_number = Column(String(255), nullable=False)
-    teacher_password_hash = Column(String(255), nullable=False)
-    teacher_is_active = Column(Boolean, nullable=False)
-    school_admin_id = Column(Integer, ForeignKey("admin.admin_id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
-class Student(Base):
-    __tablename__ = "students"
-    student_id = Column(Integer, nullable=False)
-    school_student_id = Column(Integer, nullable=False)
-    student_email = Column(String(255), unique=True, nullable=False)
-    student_name = Column(String(255), nullable=False)
-    student_phone_number = Column(String(255), nullable=False)
-    student_password_hash = Column(String(255), nullable=False)
-    student_average_grade = Column(Integer, nullable=False)
-    student_is_studying = Column(Boolean, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-    __table_args__ = (PrimaryKeyConstraint('student_id', 'school_student_id', name='pk_student'),)
-
-class Course(Base):
-    __tablename__ = "courses"
-    course_id = Column(Integer, primary_key=True)
-    course_name = Column(String(255), nullable=False)
-    course_description = Column(String(255), nullable=False)
-    course_is_active = Column(Boolean, nullable=False)
-    course_teacher_id = Column(Integer, ForeignKey("teachers.teacher_id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
-class Assignment(Base):
-    __tablename__ = "assignments"
-    assignment_id = Column(Integer, primary_key=True)
-    assignment_name = Column(String(255), nullable=False)
-    assignment_description = Column(String(255), nullable=False)
-    assignment_due_date = Column(DateTime, nullable=False)
-    assignment_status = Column(String(50), default='active')
-    assignment_course_id = Column(Integer, ForeignKey("courses.course_id"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-
-# Pydantic schemas
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
-    phone_number: str
-
-class UserResponse(BaseModel):
-    id: int
-    email: str
-    name: str
-    
-    class Config:
-        from_attributes = True
-
-class StudentResponse(BaseModel):
-    student_id: int
-    student_name: str
-    student_email: str
-    student_average_grade: int
-    student_is_studying: bool
-    
-    class Config:
-        from_attributes = True
-
-class TeacherResponse(BaseModel):
-    teacher_id: int
-    teacher_name: str
-    teacher_email: str
-    teacher_is_active: bool
-    
-    class Config:
-        from_attributes = True
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
 # Utility functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -156,14 +52,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-
-# Dependency to get database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # Authentication dependency
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -340,6 +228,11 @@ async def get_students(current_user = Depends(get_current_user), db: Session = D
 async def get_teachers(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
     teachers = db.query(Teacher).all()
     return teachers
+
+@app.get("/admins", response_model=List[AdminResponse])
+async def get_admins(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+    admins = db.query(Admin).all()
+    return admins
 
 @app.get("/me")
 async def get_current_user_info(current_user = Depends(get_current_user)):
