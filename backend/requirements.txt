@@ -1,4 +1,23 @@
-sqlalchemy>=2.0
-pgvector>=0.2
-psycopg2-binary>=2.9
-openai>=1.0
+  # --- LangChain ecosystem ---
+   langchain 
+   langchain-community 
+   langchain-openai 
+   langchain-huggingface 
+   langchain-experimental 
+
+   # --- LLM / embedding providers ---
+   openai 
+   google-generativeai 
+   requests 
+
+   # --- Database / vector search ---
+   sqlalchemy 
+   pgvector 
+   psycopg2-binary 
+
+   # --- PDF handling ---
+   PyMuPDF 
+   pypdf 
+
+   # --- Utilities ---
+   python-dotenv 
