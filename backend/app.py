@@ -204,6 +204,65 @@ async def health_check():
     return {"status": "healthy"}
 
 # Authentication routes
+@app.post("/auth/register/admin", response_model=AdminResponse)
+async def register_admin(admin: AdminCreate, db: Session = Depends(get_db)):
+    # Check if email already exists
+    if db.query(Admin).filter(Admin.admin_email == admin.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Map plan to subscription details
+    plan_mapping = {
+        'sml': {
+            'type': 'Home School Package',
+            'price': 9.99,
+            'features': '1 Teacher, 4 Classes per Teacher, Up to 10 Students per Class'
+        },
+        'mid': {
+            'type': 'Mid Sized School', 
+            'price': 59.99,
+            'features': 'Up to 100 Teachers, Up to 4 Classes per Teacher, Up to 35 Students per Class'
+        },
+        'lrg': {
+            'type': 'Large School / University',
+            'price': 694.20,
+            'features': 'Up to 250 Teachers, Up to 6 Classes per Teacher, Up to 250 per Class'
+        }
+    }
+    
+    plan_details = plan_mapping.get(admin.plan, plan_mapping['mid'])  # Default to mid plan
+    
+    # Create subscription dates
+    start_date = datetime.utcnow()
+    end_date = start_date + timedelta(days=30)  # 30-day trial
+    renewal_date = end_date
+    
+    db_admin = Admin(
+        school_name=admin.school_name,
+        admin_email=admin.email,
+        admin_name=admin.admin_name,
+        admin_password_hash=get_password_hash(admin.password),
+        admin_phone_number=admin.admin_phone_number,
+        subscription_type=plan_details['type'],
+        subscription_start_date=start_date,
+        subscription_end_date=end_date,
+        subscription_status='trial',  # Start with trial
+        subscription_renewal_date=renewal_date,
+        subscription_renewal_status='pending',
+    )
+    
+    db.add(db_admin)
+    db.commit()
+    db.refresh(db_admin)
+    
+    return AdminResponse(
+        admin_id=db_admin.admin_id,
+        school_name=db_admin.school_name,
+        admin_email=db_admin.admin_email,
+        admin_name=db_admin.admin_name,
+        subscription_type=db_admin.subscription_type,
+        subscription_status=db_admin.subscription_status
+    )
+
 @app.post("/auth/register/student", response_model=UserResponse)
 async def register_student(user: UserCreate, db: Session = Depends(get_db)):
     if db.query(Student).filter(Student.student_email == user.email).first():
