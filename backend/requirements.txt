@@ -1,38 +1,23 @@
-# LLM related
-langchain
-langchain-openai
-langchain-community
-langchain-huggingface
-openai
-google-generativeai
-requests
-sentence-transformers
-tiktoken
+  # --- LangChain ecosystem ---
+   langchain 
+   langchain-community 
+   langchain-openai 
+   langchain-huggingface 
+   langchain-experimental 
 
-# Vector DB
-psycopg2-binary
-pgvector
-sqlalchemy
+   # --- LLM / embedding providers ---
+   openai 
+   google-generativeai 
+   requests 
 
-# PDF processing
-pypdf
-pymupdf
+   # --- Database / vector search ---
+   sqlalchemy 
+   pgvector 
+   psycopg2-binary 
 
-# Web framework
-fastapi
-uvicorn
+   # --- PDF handling ---
+   PyMuPDF 
+   pypdf 
 
-# Other
-python-dotenv
-numpy
-scikit-learn
-nltk
-unstructured
-thefuzz
-python-Levenshtein
-pandas
-PyPDF2
-PyCryptodome
-torch
-pillow
-transformers
+   # --- Utilities ---
+   python-dotenv 
