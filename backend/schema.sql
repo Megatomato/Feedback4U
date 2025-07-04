@@ -54,10 +54,12 @@ CREATE TABLE courses (
 
 CREATE TABLE enrollments (
     enrollment_id SERIAL PRIMARY KEY,
-    student_id INTEGER NOT NULL REFERENCES students(student_id),
+    student_id INTEGER NOT NULL,
+    school_student_id INTEGER NOT NULL,
     course_id INTEGER NOT NULL REFERENCES courses(course_id),
     enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(student_id, course_id)
+    FOREIGN KEY (student_id, school_student_id) REFERENCES students(student_id, school_student_id),
+    UNIQUE(student_id, school_student_id, course_id)
 );
 
 CREATE TABLE assignments (
@@ -73,13 +75,15 @@ CREATE TABLE assignments (
 
 CREATE TABLE submitted_assignments (
     submission_id SERIAL PRIMARY KEY,
-    submitted_assignment_student_id INTEGER NOT NULL REFERENCES students(student_id),
+    submitted_assignment_student_id INTEGER NOT NULL,
+    submitted_assignment_school_student_id INTEGER NOT NULL,
     submitted_assignment_assignment_id INTEGER NOT NULL REFERENCES assignments(assignment_id),
     submission_status VARCHAR(50) DEFAULT 'submitted' CHECK (submission_status IN ('submitted', 'graded')),
     ai_feedback TEXT,
     ai_grade DECIMAL(5, 2),
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    graded_at TIMESTAMP
+    graded_at TIMESTAMP,
+    FOREIGN KEY (submitted_assignment_student_id, submitted_assignment_school_student_id) REFERENCES students(student_id, school_student_id)
 );
 
 -- Performance indexes
