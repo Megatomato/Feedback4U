@@ -27,7 +27,6 @@ from backend.RAG.gitee_embeddings import GiteeAIEmbeddings
 # the model initialises and ultimately to the failing OSError observed in the tests.
 if "HuggingFaceEmbeddings" not in globals():
     from langchain_huggingface import HuggingFaceEmbeddings
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # ---------------------------------------------------------------------
 load_dotenv()

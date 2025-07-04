@@ -6,7 +6,7 @@ import logging
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from backend.RAG.database import ingest_file, ingest_reference_file
+from backend.RAG.rag_db import ingest_file, ingest_reference_file
 from backend.RAG.llm import generate_and_store_feedback
 
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +41,8 @@ def handle_get_feedback(args):
             student_id=args.student,
             assignment_id=args.assignment,
             course_id=args.course,
-            qvec=qvec
+            qvec=qvec,
+            provider=args.provider
         )
         logging.info("Feedback generation complete.")
         print("--- Generated Feedback ---")
@@ -72,6 +73,7 @@ def main():
     parser_feedback.add_argument("--course", required=True, help="Course ID, e.g. 'MATH101'.")
     parser_feedback.add_argument("--chunker", choices=["recursive", "semantic"], default="recursive", help="Chunking strategy.")
     parser_feedback.add_argument("--embedder", choices=["openai", "gemini", "gitee"], default="gitee", help="Embedding model.")
+    parser_feedback.add_argument("--provider", choices=["openai", "gemini", "gitee", "deepseek"], default="gitee", help="LLM provider for feedback generation.")
     parser_feedback.set_defaults(func=handle_get_feedback)
 
     args = parser.parse_args()

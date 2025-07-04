@@ -1,23 +1,38 @@
-PyMuPDF
-python-dotenv
-SQLAlchemy
-pgvector
-langchain-openai
-# langchain_google_genai
-# langchain_community
-# deepinfra
+# LLM related
 langchain
-langchain_experimental
-psycopg2-binary
-openai
-# pyopencl
-# torch
-numpy
-
-sentence-transformers
-
+langchain-openai
+langchain-community
 langchain-huggingface
-pypdf
-
-# Used for Gitee AI REST calls
+openai
+google-generativeai
 requests
+sentence-transformers
+tiktoken
+
+# Vector DB
+psycopg2-binary
+pgvector
+sqlalchemy
+
+# PDF processing
+pypdf
+pymupdf
+
+# Web framework
+fastapi
+uvicorn
+
+# Other
+python-dotenv
+numpy
+scikit-learn
+nltk
+unstructured
+thefuzz
+python-Levenshtein
+pandas
+PyPDF2
+PyCryptodome
+torch
+pillow
+transformers
