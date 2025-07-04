@@ -9,6 +9,66 @@ const api = axios.create({
   },
 });
 
+// Add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle token expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Authentication API calls
+export const authAPI = {
+  registerAdmin: (data) => {
+    const payload = {
+      school_name: data.schoolName,
+      email: data.email,
+      password: data.password,
+      admin_name: data.adminName || 'Admin User',
+      admin_phone_number: data.phoneNumber || '000-000-0000',
+      plan: data.plan
+    };
+    return api.post('/auth/register/admin', payload);
+  },
+  
+  registerStudent: (data) => {
+    return api.post('/auth/register/student', data);
+  },
+  
+  login: (email, password) => {
+    const formData = new FormData();
+    formData.append('username', email);
+    formData.append('password', password);
+    
+    return api.post('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+  },
+  
+  getCurrentUser: () => api.get('/me'),
+  
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+};
+
 // Student API calls
 export const studentAPI = {
   getAll: () => api.get('/students'),
@@ -22,6 +82,11 @@ export const studentAPI = {
 export const teacherAPI = {
   getAll: () => api.get('/teachers'),
   getById: (id) => api.get(`/teachers/${id}`),
+};
+
+// Admin API calls
+export const adminAPI = {
+  getAll: () => api.get('/admins'),
 };
 
 export default api;
