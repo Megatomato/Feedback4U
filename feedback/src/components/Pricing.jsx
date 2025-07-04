@@ -1,6 +1,4 @@
 import Button from 'react-bootstrap/Button';
-import Image from 'react-bootstrap/Image';
-import logo from '../assets/logo.png';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
 import Container from 'react-bootstrap/Container';
@@ -53,7 +51,7 @@ function PricingCard(props) {
         <Card.Text>
           <StringList items={props.features}/>
         </Card.Text>
-      <Button>Begin Your Subscription</Button>
+      <Button href="./signup">Begin Your Subscription</Button>
       </Card.Body>
     </Card>
   );
@@ -73,7 +71,7 @@ function PricingCardAlt(props) {
         <Card.Text>
           <StringList items={props.features}/>
         </Card.Text>
-      <Button variant="light">Begin Your Subscription</Button>
+      <Button href="/signup" variant="light">Begin Your Subscription</Button>
       </Card.Body>
     </Card>
   );

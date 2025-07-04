@@ -22,7 +22,7 @@ function LandSection(props) {
           }}>
             <h1 style={{ fontSize: "3rem", margin: "0.67em 0" }}> {props.name} </h1>
             <p class="text-justify" style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
-            <Button variant="primary" href="#pricing">Let's Begin</Button>
+            <Button variant="primary" href="#pricing">Check out the pricing today!</Button>
           </div>
         </Col>
         <Col>
@@ -60,7 +60,7 @@ function LandSectionRight(props) {
             }}>
               <h1 style={{ fontSize: "3rem", margin: "0.67em 0" }}> {props.name} </h1>
               <p class="text-jusitfy" style={{ fontSize: "1.5rem", margin: "0.67em 0" }}> {props.txt} </p>
-              <Button variant="light" href="#pricing">Let's Begin</Button>
+              <Button variant="light" href="/signup">Signup today!!!</Button>
             </div>
           </Col>
         </Row>
