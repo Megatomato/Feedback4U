@@ -7,7 +7,7 @@ import Button from "react-bootstrap/Button"
 
 import { AdminNav }  from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
-import { ATable } from '../components/Data.jsx';
+import { ATable, Chart } from '../components/Data.jsx';
 
 const AdminDashPage = () => {
 
