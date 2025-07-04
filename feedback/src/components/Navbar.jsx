@@ -30,8 +30,6 @@ function AdminNav() {
           <Image src={logo} rounded height="35px"/>
           <Navbar.Brand href="/admin/dashboard">Feedback4U</Navbar.Brand>
           <Nav className="ms-auto">
-            <Nav.Link href="/admin/students">Students</Nav.Link>
-            <Nav.Link href="/admin/teachers">Teachers</Nav.Link>
           </Nav>
         </Container>
       </Navbar>

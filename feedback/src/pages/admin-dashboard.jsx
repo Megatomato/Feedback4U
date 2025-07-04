@@ -1,13 +1,16 @@
-import React from "react";
+import React, { useState }from "react";
 import Col from "react-bootstrap/Col"
 import Row from "react-bootstrap/Row"
 import Container from "react-bootstrap/Container"
 import Card from "react-bootstrap/Card"
 import Button from "react-bootstrap/Button"
+import ButtonToolbar from "react-bootstrap/ButtonToolbar"
+import Modal from "react-bootstrap/Modal"
 
 import { AdminNav }  from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { ATable } from '../components/Data.jsx';
+import { AddTeacherForm, AddStudentForm } from '../components/Forms.jsx';
 
 const AdminDashPage = () => {
 
@@ -33,10 +36,10 @@ const AdminDashPage = () => {
             paddingBottom: "50px",
           }}>
             <Col>
-              <QuarterScreenCard title={"Edit Students"} txt={"Add / Remove or change information about students"}/>
+              <AddXButton form={<AddStudentForm/>} title={"Student"} txt={"Add / Remove or change information about students"}/>
             </Col>
             <Col>
-              <QuarterScreenCard title={"Edit Teachers"} txt={"Add / Remove or change information about teachers"}/>
+              <AddXButton form={<AddTeacherForm/>} title={"Teacher"} txt={"Add / Remove or change information about teachers"}/>
             </Col>
           </Row>
           <div style={{
@@ -54,19 +57,63 @@ const AdminDashPage = () => {
     );
 };
 
-function QuarterScreenCard(props) {
+function AddXButton(props) {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleCloseAdd = () => setShowAddModal(false);
+  const handleShowAdd = () => setShowAddModal(true);
+
+  const handleCloseEdit = () => setShowEditModal(false);
+  const handleShowEdit = () => setShowEditModal(true);
+
   return (
     <Container fluid>
-          <Card style={{
-                height: '15vh',
-          }}>
-            <Card.Body>
-              <Card.Title>
-                <Button>{props.title}</Button>
-              </Card.Title>
-              <Card.Text>{props.txt}</Card.Text>
-            </Card.Body>
-          </Card>
+      <Card style={{ height: '15vh' }}>
+        <Card.Body>
+          <Card.Title>
+            {props.txt}
+          </Card.Title>
+          <Card.Text>
+            <ButtonToolbar>
+              <Button onClick={handleShowAdd} className="me-2">
+                Add {props.title}s
+              </Button>
+              <Button onClick={handleShowEdit}>
+                Edit {props.title} Information
+              </Button>
+            </ButtonToolbar>
+          </Card.Text>
+        </Card.Body>
+      </Card>
+
+      <Modal show={showAddModal} onHide={handleCloseAdd}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add {props.title}s</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {props.form}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseAdd}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showEditModal} onHide={handleCloseEdit}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit {props.title} Information</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {props.form}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseEdit}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }
