@@ -5,9 +5,9 @@ import Button from 'react-bootstrap/Button';
 
 function FeetDroolEmoji() {
   return (
-    <footer className="fixed-bottom" style={{
-       background: "#286983",
-       color: "#faf4ed",
+    <footer className="mt-auto" style={{
+      background: "#286983",
+      color: "#faf4ed",
     }}>
       <Container style={{
                 paddingTop: "50px",

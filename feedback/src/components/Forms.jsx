@@ -2,6 +2,8 @@ import { useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
+import Modal from 'react-bootstrap/Modal';
+import { sampleData } from '../data/sampleData';
 
 function AddStudentForm() {
   const [formData, setFormData] = useState({
@@ -246,4 +248,100 @@ function AddTeacherForm() {
     );
 };
 
-export { AddStudentForm, AddTeacherForm };
+const AssignmentModal = ({ show, onHide, onSubmit }) => {
+  const [form, setForm] = useState({
+    courseId: '',
+    title: '',
+    description: '',
+    dueDate: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(form);
+    setForm({ courseId: '', title: '', description: '', dueDate: '' });
+  };
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  return (
+    <Modal show={show} onHide={onHide} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>Create New Assignment</Modal.Title>
+      </Modal.Header>
+
+      <Form onSubmit={handleSubmit}>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Course</Form.Label>
+            <Form.Select
+              name="courseId"
+              value={form.courseId}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select a course</option>
+              {sampleData.courses.map(course => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Assignment Title</Form.Label>
+            <Form.Control
+              type="text"
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              required
+              placeholder="Enter assignment title"
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Description</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              required
+              placeholder="Enter assignment description"
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Due Date</Form.Label>
+            <Form.Control
+              type="date"
+              name="dueDate"
+              value={form.dueDate}
+              onChange={handleChange}
+              required
+            />
+          </Form.Group>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={onHide}>
+            Cancel
+          </Button>
+          <Button variant="primary" type="submit">
+            Create Assignment
+          </Button>
+        </Modal.Footer>
+      </Form>
+    </Modal>
+  );
+};
+
+export { AddStudentForm, AddTeacherForm, AssignmentModal };
