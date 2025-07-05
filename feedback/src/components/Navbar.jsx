@@ -3,7 +3,9 @@ import Navbar from 'react-bootstrap/Navbar';
 import Nav from 'react-bootstrap/Nav';
 import logo from '../assets/logo.png';
 import Image from 'react-bootstrap/Image';
-
+import NavDropdown from 'react-bootstrap/NavDropdown';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function LandNav() {
   return (
@@ -22,4 +24,74 @@ function LandNav() {
   );
 }
 
-export default LandNav;
+function AdminNav() {
+  return (
+    <>
+      <Navbar bg="primary" data-bs-theme="dark">
+        <Container>
+          <Image src={logo} rounded height="35px"/>
+          <Navbar.Brand href="/admin/dashboard">Feedback4U</Navbar.Brand>
+          <Nav className="ms-auto">
+          </Nav>
+        </Container>
+      </Navbar>
+    </>
+  );
+}
+
+function StudentNav() {
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+
+  if (!currentUser) return null;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <Navbar bg="light" expand="lg" className="border-bottom">
+      <Container>
+        <Navbar.Brand as={Link} to="/" className="fw-bold">
+          <i className="bi bi-book me-2"></i>
+          Feedback4U
+        </Navbar.Brand>
+
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
+            <Nav.Link as={Link} to="/">
+              <i className="bi bi-house me-1"></i>
+              Dashboard
+            </Nav.Link>
+            <Nav.Link as={Link} to="/courses">
+              <i className="bi bi-journal-text me-1"></i>
+              Courses
+            </Nav.Link>
+          </Nav>
+
+          <Nav>
+            <NavDropdown title={
+              <>
+                <i className="bi bi-person-circle me-1"></i>
+                {currentUser.name}
+              </>
+            } id="basic-nav-dropdown">
+              <NavDropdown.Item disabled>
+                <small className="text-muted">Role: {currentUser.role}</small>
+              </NavDropdown.Item>
+              <NavDropdown.Divider />
+              <NavDropdown.Item onClick={handleLogout}>
+                <i className="bi bi-box-arrow-right me-1"></i>
+                Logout
+              </NavDropdown.Item>
+            </NavDropdown>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
+  );
+};
+
+export { LandNav, AdminNav, StudentNav };

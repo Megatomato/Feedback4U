@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col, Alert, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar.jsx'
+import { LandNav } from '../components/Navbar.jsx'
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -48,6 +48,8 @@ const SignupPage = () => {
       setValidated(true);
 
       // Redirect after successful signup
+      // NOTE: this may be an if to deal with student / admin / teacher or a redirect when
+            // at dash?
       setTimeout(() => navigate('/dashboard'), 2000);
     } catch (error) {
       console.error('Signup error:', error);
@@ -71,7 +73,7 @@ const SignupPage = () => {
 
   return (
     <div>
-      <Navbar/>
+      <LandNav/>
       <Container className="py-5">
         <Row className="justify-content-center">
           <Col md={10} lg={8} xl={6}>

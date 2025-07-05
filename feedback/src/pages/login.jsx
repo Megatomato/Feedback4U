@@ -2,11 +2,184 @@ import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col, Alert, Card } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 
-import Navbar from '../components/Navbar.jsx'
+import { useAuth } from '../context/AuthContext';
+import { LandNav } from '../components/Navbar.jsx'
 
+//import React, { useState } from 'react';
+//import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
+//import { useAuth } from '../context/AuthContext';
+//import { useNavigate } from 'react-router-dom';
+//<Container fluid className="px-4 py-3"></Container>
+//const LoginPage = () => {
+//  const [formData, setFormData] = useState({ username: '', password: '' });
+//  const [error, setError] = useState('');
+//  const { login } = useAuth();
+//  const navigate = useNavigate();
+//
+//  const handleChange = (e) => {
+//    setFormData({
+//      ...formData,
+//      [e.target.name]: e.target.value
+//    });
+//  };
+//
+//  const handleSubmit = async (e) => {
+//    e.preventDefault();
+//    setError('');
+//
+//    if (!formData.username || !formData.password) {
+//      setError('Please fill in all fields');
+//      return;
+//    }
+//
+//    const success = await login(formData.username.trim(), formData.password.trim());
+//    if (success) {
+//      navigate('/dashboard');
+//    } else {
+//      setError('Invalid credentials. Use teacher/password or student/password');
+//    }
+//  };
+//
+//  return (
+//    <div style={{
+//      minHeight: '100vh',
+//      backgroundColor: 'var(--rp-base)',
+//      display: 'flex',
+//      alignItems: 'center',
+//      justifyContent: 'center',
+//      padding: '20px'
+//    }}>
+//      <Container>
+//        <div className="row justify-content-center">
+//          <div className="col-md-6 col-lg-5">
+//            <Card style={{
+//              backgroundColor: 'var(--rp-surface)',
+//              border: '1px solid var(--rp-highlight-med)',
+//              borderRadius: '16px',
+//              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+//            }}>
+//              <Card.Body style={{ padding: '3rem' }}>
+//                <div className="text-center mb-5">
+//                  <h1 style={{
+//                    color: 'var(--rp-iris)',
+//                    fontSize: '3rem',
+//                    fontWeight: '600',
+//                    marginBottom: '1rem'
+//                  }}>
+//                    Feedback4U
+//                  </h1>
+//                  <p style={{
+//                    color: 'var(--rp-subtle)',
+//                    fontSize: '1.1rem',
+//                    marginBottom: '0'
+//                  }}>
+//                    Educational Assignment Management System
+//                  </p>
+//                </div>
+//
+//                {error && <Alert variant="danger">{error}</Alert>}
+//
+//                <Form onSubmit={handleSubmit}>
+//                  <Form.Group className="mb-4">
+//                    <Form.Label style={{
+//                      color: 'var(--rp-text)',
+//                      fontWeight: '500',
+//                      marginBottom: '0.75rem'
+//                    }}>
+//                      Username
+//                    </Form.Label>
+//                    <Form.Control
+//                      type="text"
+//                      name="username"
+//                      value={formData.username}
+//                      onChange={handleChange}
+//                      required
+//                      placeholder="Enter username"
+//                      style={{
+//                        backgroundColor: 'var(--rp-surface)',
+//                        border: '2px solid var(--rp-iris)',
+//                        borderRadius: '12px',
+//                        padding: '12px 16px',
+//                        fontSize: '1rem',
+//                        color: 'var(--rp-text)'
+//                      }}
+//                    />
+//                  </Form.Group>
+//
+//                  <Form.Group className="mb-4">
+//                    <Form.Label style={{
+//                      color: 'var(--rp-text)',
+//                      fontWeight: '500',
+//                      marginBottom: '0.75rem'
+//                    }}>
+//                      Password
+//                    </Form.Label>
+//                    <Form.Control
+//                      type="password"
+//                      name="password"
+//                      value={formData.password}
+//                      onChange={handleChange}
+//                      required
+//                      placeholder="Enter password"
+//                      style={{
+//                        backgroundColor: 'var(--rp-surface)',
+//                        border: '2px solid var(--rp-highlight-med)',
+//                        borderRadius: '12px',
+//                        padding: '12px 16px',
+//                        fontSize: '1rem',
+//                        color: 'var(--rp-text)'
+//                      }}
+//                    />
+//                  </Form.Group>
+//
+//                  <Button
+//                    type="submit"
+//                    style={{
+//                      width: '100%',
+//                      backgroundColor: 'var(--rp-iris)',
+//                      border: 'none',
+//                      borderRadius: '12px',
+//                      padding: '12px',
+//                      fontSize: '1.1rem',
+//                      fontWeight: '500',
+//                      marginBottom: '2rem'
+//                    }}
+//                  >
+//                    Login
+//                  </Button>
+//                </Form>
+//
+//                <div style={{
+//                  backgroundColor: 'var(--rp-highlight-low)',
+//                  border: '1px solid var(--rp-highlight-med)',
+//                  borderRadius: '12px',
+//                  padding: '1.5rem',
+//                  textAlign: 'center'
+//                }}>
+//                  <div style={{ color: 'var(--rp-text)', marginBottom: '0.5rem' }}>
+//                    <strong>Demo Credentials:</strong>
+//                  </div>
+//                  <div style={{ color: 'var(--rp-iris)', fontWeight: '600' }}>
+//                    <strong>Teacher:</strong> teacher / password
+//                  </div>
+//                  <div style={{ color: 'var(--rp-iris)', fontWeight: '600' }}>
+//                    <strong>Student:</strong> student / password
+//                  </div>
+//                </div>
+//              </Card.Body>
+//            </Card>
+//          </div>
+//        </div>
+//      </Container>
+//    </div>
+//  );
+//};
+//<Container className="app-shell"></Container>
+//export default LoginPage;
 const LoginPage = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
 
@@ -36,26 +209,17 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
 
-    try {
-      // NOTE: The actual API call will go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Replace with actual authentication logic
-      console.log('Login attempt:', formData);
-
-      // NOTE: this may be an if to deal with student / admin / teacher or a redirect when
-            // at dash?
+    const success = await login(formData.username.trim(), formData.password.trim());
+    if (success) {
       navigate('/dashboard');
-    } catch (err) {
-      setError('Invalid email or password');
-    } finally {
-      setIsLoading(false);
+    } else {
+      setError('Invalid credentials. Use teacher/password or student/password');
     }
   };
 
   return (
     <div>
-    <Navbar/>
+    <LandNav/>
     <Container className="py-5">
       <Row className="justify-content-center">
         <Col md={8} lg={6} xl={5}>
@@ -73,18 +237,18 @@ const LoginPage = () => {
               )}
 
               <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                <Form.Group controlId="email" className="mb-3">
-                  <Form.Label>Email Address</Form.Label>
+                <Form.Group controlId="username" className="mb-3">
+                  <Form.Label>Username</Form.Label>
                   <Form.Control
                     required
-                    type="email"
-                    placeholder="Enter your email"
-                    name="email"
+                    type="username"
+                    placeholder="Enter your username"
+                    name="username"
                     value={formData.email}
                     onChange={handleChange}
                   />
                   <Form.Control.Feedback type="invalid">
-                    Please provide a valid email.
+                    Please provide a valid username.
                   </Form.Control.Feedback>
                 </Form.Group>
 
