@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Badge, Button, ProgressBar } from 'react-boo
 import { useParams, useNavigate } from 'react-router-dom';
 import { sampleData } from '../data/sampleData';
 import { AssignmentCard } from '../components/Cards';
+import { StudentNav } from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
 const CoursePage = () => {
@@ -32,6 +33,8 @@ const CoursePage = () => {
   };
 
   return (
+    <div>
+    <StudentNav/>
     <Container className="my-4">
       <Row className="mb-4">
         <Col>
@@ -143,6 +146,7 @@ const CoursePage = () => {
         </Col>
       </Row>
     </Container>
+    </div>
   );
 };
 

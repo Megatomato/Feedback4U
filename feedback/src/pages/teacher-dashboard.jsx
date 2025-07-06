@@ -5,6 +5,7 @@ import { sampleData } from '../data/sampleData';
 import { CourseCard, AssignmentCard } from '../components/Cards';
 import { AssignmentModal } from '../components/Forms';
 import { AnalyticsChart } from '../components/Chart';
+import { StudentNav } from '../components/Navbar';
 
 const TeacherDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -25,6 +26,8 @@ const TeacherDashboard = () => {
   };
 
   return (
+    <div>
+    <StudentNav/>
     <Container className="my-4">
       {/* Header */}
       <div className="dashboard-header">
@@ -154,6 +157,7 @@ const TeacherDashboard = () => {
         onSubmit={handleCreateAssignment}
       />
     </Container>
+    </div>
   );
 };
 

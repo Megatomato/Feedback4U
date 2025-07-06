@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { sampleData } from '../data/sampleData';
 import { formatDate } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
+import { StudentNav } from '../components/Navbar';
 
 const AssignmentDetailsPage = () => {
   const { id } = useParams();
@@ -52,6 +53,8 @@ const AssignmentDetailsPage = () => {
   };
 
   return (
+    <div>
+    <StudentNav/>
     <Container className="my-4">
       <Row className="mb-4">
         <Col>
@@ -163,6 +166,7 @@ const AssignmentDetailsPage = () => {
         </Col>
       </Row>
     </Container>
+    </div>
   );
 };
 

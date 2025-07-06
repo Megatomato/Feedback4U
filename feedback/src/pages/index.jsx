@@ -4,7 +4,7 @@ import FeetDroolEmoji from '../components/Footer.jsx';
 import PricingSection from '../components/Pricing.jsx';
 import { LandSection, LandSectionRight } from '../components/LandSection.jsx';
 import inter from '../assets/intergration.jpg';
-import cat from '../assets/mao.png';
+import cat from '../assets/chart.png';
 import teacher from '../assets/struggle-teacher.jpg';
 import multi from '../assets/multi-choice.jpg';
 

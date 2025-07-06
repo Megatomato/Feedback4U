@@ -24,23 +24,28 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/courses" element={<ProtectedRoute><CoursesPage /></ProtectedRoute>} />
-          <Route path="/course/:id" element={<ProtectedRoute><CoursePage /></ProtectedRoute>} />
-          <Route path="/assignment/:id" element={<ProtectedRoute><AssignmentDetailsPage /></ProtectedRoute>} />
-          {/* Add other routes later */}
+        {/* Main container with padding */}
+        <div style={{
+          padding: '20px', // Adjust this value as needed
+          paddingTop: '80px', // Extra top padding if you have a fixed navbar
+          minHeight: '100vh', // Ensures padding works on short pages
+        }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/courses" element={<ProtectedRoute><CoursesPage /></ProtectedRoute>} />
+            <Route path="/course/:id" element={<ProtectedRoute><CoursePage /></ProtectedRoute>} />
+            <Route path="/assignment/:id" element={<ProtectedRoute><AssignmentDetailsPage /></ProtectedRoute>} />
 
-
-          {/* Not important routes */}
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/careers" element={<CareersPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/cat" element={<CatPage />} />
-        </Routes>
+            {/* Other routes */}
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/cat" element={<CatPage />} />
+          </Routes>
+        </div>
       </Router>
     </AuthProvider>
   );
