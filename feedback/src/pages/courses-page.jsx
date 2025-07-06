@@ -3,6 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CourseCard } from '../components/Cards';
+import { StudentNav } from '../components/Navbar';
 import { sampleData } from '../data/sampleData';
 
 const CoursesPage = () => {
@@ -14,6 +15,8 @@ const CoursesPage = () => {
   };
 
   return (
+    <div>
+    <StudentNav/>
     <Container className="my-4">
       <Row className="mb-4">
         <Col>
@@ -36,6 +39,7 @@ const CoursesPage = () => {
         ))}
       </Row>
     </Container>
+    </div>
   );
 };
 

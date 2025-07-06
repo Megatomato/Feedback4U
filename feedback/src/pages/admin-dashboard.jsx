@@ -16,10 +16,38 @@ const AdminDashPage = () => {
 
     const data = [
       { id: "CSSE6400", first: 'Richard Thomas'},
+      { id: "CSSE6400", first: 'Richard Thomas'},
+      { id: "CSSE6400", first: 'Richard Thomas'},
       { id: "COMP3506", first: 'Richard Thomas'},
       { id: "COMP3400", first: 'Paul Vbrik'},
       { id: "CSSE3200", first: 'Guowei Yang'},
       { id: "CSSE3100", first: 'Guowei Yang'},
+      { id: "CSSE3100", first: 'Guowei Yang'},
+      { id: "COMS3200", first: 'Dan Kim'},
+      { id: "CSSE1001", first: 'Jane Smith'},
+      { id: "CSSE3200", first: 'Bob Johnson'},
+      { id: "COMS3200", first: 'Dan Kim'},
+      { id: "CSSE1001", first: 'Jane Smith'},
+      { id: "CSSE3200", first: 'Bob Johnson'},
+      { id: "COMP3506", first: 'Richard Thomas'},
+      { id: "COMP3400", first: 'Paul Vbrik'},
+      { id: "CSSE3200", first: 'Guowei Yang'},
+      { id: "CSSE3100", first: 'Guowei Yang'},
+      { id: "CSSE3100", first: 'Guowei Yang'},
+      { id: "COMS3200", first: 'Dan Kim'},
+      { id: "CSSE1001", first: 'Jane Smith'},
+      { id: "CSSE3200", first: 'Bob Johnson'},
+      { id: "COMS3200", first: 'Dan Kim'},
+      { id: "CSSE1001", first: 'Jane Smith'},
+      { id: "CSSE3200", first: 'Bob Johnson'},
+      { id: "COMP3506", first: 'Richard Thomas'},
+      { id: "COMP3400", first: 'Paul Vbrik'},
+      { id: "CSSE3200", first: 'Guowei Yang'},
+      { id: "CSSE3100", first: 'Guowei Yang'},
+      { id: "CSSE3100", first: 'Guowei Yang'},
+      { id: "COMS3200", first: 'Dan Kim'},
+      { id: "CSSE1001", first: 'Jane Smith'},
+      { id: "CSSE3200", first: 'Bob Johnson'},
       { id: "COMS3200", first: 'Dan Kim'},
       { id: "CSSE1001", first: 'Jane Smith'},
       { id: "CSSE3200", first: 'Bob Johnson'},
@@ -43,16 +71,14 @@ const AdminDashPage = () => {
             </Col>
           </Row>
           <div style={{
-            maxHeight: "450px",
             overflowY: "auto"
           }}>
             <ATable
-              headers={["Course Code", "Teacher", "Students", "Analytics" ]}
+              headers={["Course Code", "Teacher", "Students"]}
               data={data}
             />
           </div>
         </Container>
-        <Footer/>
     </div>
     );
 };

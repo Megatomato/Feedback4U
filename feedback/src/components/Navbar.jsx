@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 function LandNav() {
   return (
     <>
-      <Navbar bg="primary" data-bs-theme="dark">
+      <Navbar bg="primary" data-bs-theme="dark" fixed="top">
         <Container>
           <Image src={logo} rounded height="35px"/>
           <Navbar.Brand href="/">Feedback4U</Navbar.Brand>
@@ -25,21 +25,6 @@ function LandNav() {
 }
 
 function AdminNav() {
-  return (
-    <>
-      <Navbar bg="primary" data-bs-theme="dark">
-        <Container>
-          <Image src={logo} rounded height="35px"/>
-          <Navbar.Brand href="/admin/dashboard">Feedback4U</Navbar.Brand>
-          <Nav className="ms-auto">
-          </Nav>
-        </Container>
-      </Navbar>
-    </>
-  );
-}
-
-function StudentNav() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -51,8 +36,25 @@ function StudentNav() {
   };
 
   return (
-    <Navbar bg="light" expand="lg" className="border-bottom">
+    <>
+      <Navbar bg="primary" data-bs-theme="dark" fixed="top">
+        <Container>
+          <Image src={logo} rounded height="35px"/>
+          <Navbar.Brand href="/admin/dashboard">Feedback4U</Navbar.Brand>
+          <Logout/>
+        </Container>
+      </Navbar>
+    </>
+  );
+}
+
+function StudentNav() {
+
+  const navigate = useNavigate();
+  return (
+    <Navbar bg="primary" data-bs-theme="dark" fixed="top">
       <Container>
+        <Image src={logo} rounded height="35px"/>
         <Navbar.Brand as={Link} to="/" className="fw-bold">
           <i className="bi bi-book me-2"></i>
           Feedback4U
@@ -61,7 +63,7 @@ function StudentNav() {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/">
+            <Nav.Link as={Link} to="/dashboard">
               <i className="bi bi-house me-1"></i>
               Dashboard
             </Nav.Link>
@@ -70,28 +72,42 @@ function StudentNav() {
               Courses
             </Nav.Link>
           </Nav>
-
-          <Nav>
-            <NavDropdown title={
-              <>
-                <i className="bi bi-person-circle me-1"></i>
-                {currentUser.name}
-              </>
-            } id="basic-nav-dropdown">
-              <NavDropdown.Item disabled>
-                <small className="text-muted">Role: {currentUser.role}</small>
-              </NavDropdown.Item>
-              <NavDropdown.Divider />
-              <NavDropdown.Item onClick={handleLogout}>
-                <i className="bi bi-box-arrow-right me-1"></i>
-                Logout
-              </NavDropdown.Item>
-            </NavDropdown>
-          </Nav>
+          <Logout/>
         </Navbar.Collapse>
       </Container>
     </Navbar>
   );
+};
+
+function Logout() {
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+
+  if (!currentUser) return null;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+    return (
+      <Nav>
+        <NavDropdown menuVariant="light" title={
+          <>
+            <i className="bi bi-person-circle me-1"></i>
+            {currentUser.name}
+          </>
+        } id="basic-nav-dropdown">
+          <NavDropdown.Item disabled>
+            <small className="text-muted">{currentUser.role} account</small>
+          </NavDropdown.Item>
+          <NavDropdown.Divider />
+          <NavDropdown.Item onClick={handleLogout}>
+            <i className="bi bi-box-arrow-right me-1"></i>
+            Logout
+          </NavDropdown.Item>
+        </NavDropdown>
+      </Nav>
+    );
 };
 
 export { LandNav, AdminNav, StudentNav };

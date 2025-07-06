@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sampleData } from '../data/sampleData';
 import { getDaysUntilDue } from '../utils/helpers';
+import { StudentNav } from '../components/Navbar';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -39,6 +40,8 @@ const StudentDashboard = () => {
   };
 
   return (
+    <div>
+    <StudentNav/>
     <Container className="my-4">
       {/* Header */}
       <div className="dashboard-header">
@@ -221,6 +224,7 @@ const StudentDashboard = () => {
         </Col>
       </Row>
     </Container>
+    </div>
   );
 };
 

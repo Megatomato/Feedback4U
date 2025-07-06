@@ -37,6 +37,8 @@ function LandSectionRight(props) {
   return (
     <div style={{
             background: "#286983",
+            width: "100vw",
+            marginLeft: "calc(-50vw + 50%)",
             color: "#faf4ed",
             paddingTop: "50px",
             paddingBottom: "50px",

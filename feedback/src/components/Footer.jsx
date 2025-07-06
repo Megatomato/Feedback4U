@@ -8,6 +8,8 @@ function FeetDroolEmoji() {
     <footer className="mt-auto" style={{
       background: "#286983",
       color: "#faf4ed",
+      width: "100vw",
+      marginLeft: "calc(-50vw + 50%)",
     }}>
       <Container style={{
                 paddingTop: "50px",
