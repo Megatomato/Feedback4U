@@ -7,10 +7,9 @@ services:
       context: ./backend
     environment:
       PORT: 8000
-      DB_TYPE: "postgres"
       DB_USER: "postgres"
       DB_PASSWORD: "postgres"
-      DB_DATABASE: "postgres"
+      DB_DATABASE: "feedback4u_db"
       DB_PORT: "8081"
       DB_HOST: "postgres"
     ports:
@@ -18,22 +17,22 @@ services:
     depends_on:
       - db
 
-  ai-backend:
-    build:
-      dockerfile: Dockerfile
-      context: ./backend/RAG
-    environment:
-      PORT: 8080
-      DB_TYPE: "postgres"
-      DB_USER: "user"
-      DB_PASSWORD: "password"
-      DB_DATABASE: "ragdb"
-      DB_PORT: "5432"
-      DB_HOST: "postgres"
-    ports:
-      - 8080:8080
-    depends_on:
-      - postgres
+#  ai-backend:
+#    build:
+#      dockerfile: Dockerfile
+#      context: ./backend/RAG
+#    environment:
+#      PORT: 8080
+#      DB_TYPE: "postgres"
+#      DB_USER: "user"
+#      DB_PASSWORD: "password"
+#      DB_DATABASE: "ragdb"
+#      DB_PORT: "5432"
+#      DB_HOST: "postgres"
+#    ports:
+#      - 8080:8080
+#    depends_on:
+#      - postgres
 
   db:
     image: postgres:latest
@@ -47,27 +46,27 @@ services:
       POSTGRES_PASSWORD: "postgres"
       POSTGRES_DATABASE: "postgres"
 
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: rag-postgres
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ../backend/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-    environment:
-      POSTGRES_USER: "user"
-      POSTGRES_PASSWORD: "password"
-      POSTGRES_DATABASE: "ragdb"
-
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8081:8080
-    depends_on:
-      - db
+#  postgres:
+#    image: pgvector/pgvector:pg16
+#    container_name: rag-postgres
+#    restart: unless-stopped
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - pgdata:/var/lib/postgresql/data
+#      - ../backend/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+#    environment:
+#      POSTGRES_USER: "user"
+#      POSTGRES_PASSWORD: "password"
+#      POSTGRES_DATABASE: "ragdb"
+#
+#  adminer:
+#    image: adminer
+#    restart: always
+#    ports:
+#      - 8081:8080
+#    depends_on:
+#      - db
 
 #  frontend:
 #    build:

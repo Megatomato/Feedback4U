@@ -10,14 +10,24 @@ from typing import Optional, List
 
 # Import database models and schemas
 from database import (
-    Admin, Teacher, Student, Course, Assignment,
-    UserCreate, AdminCreate, UserResponse, AdminResponse, 
-    StudentResponse, TeacherResponse, Token,
-    get_db
+    Admin,
+    Teacher,
+    Student,
+    Course,
+    Assignment,
+    UserCreate,
+    AdminCreate,
+    UserResponse,
+    AdminResponse,
+    StudentResponse,
+    TeacherResponse,
+    Token,
+    get_db,
 )
 
 # Security setup
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-productionx")
+PORT = os.getenv("PORT", "8000")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -36,12 +46,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Utility functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password):
     return pwd_context.hash(password)
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -52,6 +65,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 # Authentication dependency
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -68,7 +82,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    
+
     if user_type == "student":
         user = db.query(Student).filter(Student.student_id == int(user_id)).first()
     elif user_type == "teacher":
@@ -77,19 +91,22 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         user = db.query(Admin).filter(Admin.admin_id == int(user_id)).first()
     else:
         raise credentials_exception
-        
+
     if user is None:
         raise credentials_exception
     return user
+
 
 # API Routes
 @app.get("/")
 async def root():
     return {"message": "Feedback4U API is running"}
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
 
 # Authentication routes
 @app.post("/auth/register/admin", response_model=AdminResponse)
@@ -97,65 +114,66 @@ async def register_admin(admin: AdminCreate, db: Session = Depends(get_db)):
     # Check if email already exists
     if db.query(Admin).filter(Admin.admin_email == admin.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     # Map plan to subscription details
     plan_mapping = {
-        'sml': {
-            'type': 'Home School Package',
-            'price': 9.99,
-            'features': '1 Teacher, 4 Classes per Teacher, Up to 10 Students per Class'
+        "sml": {
+            "type": "Home School Package",
+            "price": 9.99,
+            "features": "1 Teacher, 4 Classes per Teacher, Up to 10 Students per Class",
         },
-        'mid': {
-            'type': 'Mid Sized School', 
-            'price': 59.99,
-            'features': 'Up to 100 Teachers, Up to 4 Classes per Teacher, Up to 35 Students per Class'
+        "mid": {
+            "type": "Mid Sized School",
+            "price": 59.99,
+            "features": "Up to 100 Teachers, Up to 4 Classes per Teacher, Up to 35 Students per Class",
         },
-        'lrg': {
-            'type': 'Large School / University',
-            'price': 694.20,
-            'features': 'Up to 250 Teachers, Up to 6 Classes per Teacher, Up to 250 per Class'
-        }
+        "lrg": {
+            "type": "Large School / University",
+            "price": 694.20,
+            "features": "Up to 250 Teachers, Up to 6 Classes per Teacher, Up to 250 per Class",
+        },
     }
-    
-    plan_details = plan_mapping.get(admin.plan, plan_mapping['mid'])  # Default to mid plan
-    
+
+    plan_details = plan_mapping.get(admin.plan, plan_mapping["mid"])  # Default to mid plan
+
     # Create subscription dates
     start_date = datetime.utcnow()
     end_date = start_date + timedelta(days=30)  # 30-day trial
     renewal_date = end_date
-    
+
     db_admin = Admin(
         school_name=admin.school_name,
         admin_email=admin.email,
         admin_name=admin.admin_name,
         admin_password_hash=get_password_hash(admin.password),
         admin_phone_number=admin.admin_phone_number,
-        subscription_type=plan_details['type'],
+        subscription_type=plan_details["type"],
         subscription_start_date=start_date,
         subscription_end_date=end_date,
-        subscription_status='trial',  # Start with trial
+        subscription_status="trial",  # Start with trial
         subscription_renewal_date=renewal_date,
-        subscription_renewal_status='pending',
+        subscription_renewal_status="pending",
     )
-    
+
     db.add(db_admin)
     db.commit()
     db.refresh(db_admin)
-    
+
     return AdminResponse(
         admin_id=db_admin.admin_id,
         school_name=db_admin.school_name,
         admin_email=db_admin.admin_email,
         admin_name=db_admin.admin_name,
         subscription_type=db_admin.subscription_type,
-        subscription_status=db_admin.subscription_status
+        subscription_status=db_admin.subscription_status,
     )
+
 
 @app.post("/auth/register/student", response_model=UserResponse)
 async def register_student(user: UserCreate, db: Session = Depends(get_db)):
     if db.query(Student).filter(Student.student_email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     db_student = Student(
         student_email=user.email,
         student_name=user.name,
@@ -167,12 +185,11 @@ async def register_student(user: UserCreate, db: Session = Depends(get_db)):
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
-    
+
     return UserResponse(
-        id=db_student.student_id,
-        email=db_student.student_email,
-        name=db_student.student_name
+        id=db_student.student_id, email=db_student.student_email, name=db_student.student_name
     )
+
 
 @app.post("/auth/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -180,14 +197,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     user = None
     user_type = None
     user_id = None
-    
+
     # Check students
     student = db.query(Student).filter(Student.student_email == form_data.username).first()
     if student and verify_password(form_data.password, student.student_password_hash):
         user = student
         user_type = "student"
         user_id = student.student_id
-    
+
     # Check teachers
     if not user:
         teacher = db.query(Teacher).filter(Teacher.teacher_email == form_data.username).first()
@@ -195,7 +212,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
             user = teacher
             user_type = "teacher"
             user_id = teacher.teacher_id
-    
+
     # Check admins
     if not user:
         admin = db.query(Admin).filter(Admin.admin_email == form_data.username).first()
@@ -203,41 +220,46 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
             user = admin
             user_type = "admin"
             user_id = admin.admin_id
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user_id), "type": user_type},
-        expires_delta=access_token_expires
+        data={"sub": str(user_id), "type": user_type}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+
 # Protected routes
 @app.get("/students", response_model=List[StudentResponse])
-async def get_students(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_students(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     students = db.query(Student).all()
     return students
 
+
 @app.get("/teachers", response_model=List[TeacherResponse])
-async def get_teachers(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_teachers(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     teachers = db.query(Teacher).all()
     return teachers
 
+
 @app.get("/admins", response_model=List[AdminResponse])
-async def get_admins(current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_admins(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     admins = db.query(Admin).all()
     return admins
 
+
 @app.get("/me")
-async def get_current_user_info(current_user = Depends(get_current_user)):
+async def get_current_user_info(current_user=Depends(get_current_user)):
     return current_user
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(app, host="0.0.0.0", port=PORT)

@@ -1,4 +1,15 @@
-from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, DECIMAL, Text
+from sqlalchemy import (
+    PrimaryKeyConstraint,
+    create_engine,
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    DECIMAL,
+    Text,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from pydantic import BaseModel, EmailStr
@@ -7,10 +18,19 @@ import os
 from typing import Optional, List
 
 # Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://localhost:5432/feedback4u_db")
-engine = create_engine(DATABASE_URL)
+PORT = os.getenv("DB_PORT", "8081")
+USER = os.getenv("DB_USER", "postgres")
+PASSWORD = os.getenv("DB_PASSWORD", "postgres")
+DATABASE = os.getenv("DB_DATABASE", "postgres")
+
+DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@localhost:{PORT}/{DATABASE}"
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=int(os.getenv("DB_POOL_SIZE", 5)),
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
 
 # Database Models (matching your schema)
 class Admin(Base):
@@ -30,6 +50,7 @@ class Admin(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
+
 class Teacher(Base):
     __tablename__ = "teachers"
     teacher_id = Column(Integer, primary_key=True)
@@ -41,6 +62,7 @@ class Teacher(Base):
     school_admin_id = Column(Integer, ForeignKey("admin.admin_id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+
 
 class Student(Base):
     __tablename__ = "students"
@@ -55,6 +77,7 @@ class Student(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
+
 class Course(Base):
     __tablename__ = "courses"
     course_id = Column(Integer, primary_key=True)
@@ -65,16 +88,18 @@ class Course(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
+
 class Assignment(Base):
     __tablename__ = "assignments"
     assignment_id = Column(Integer, primary_key=True)
     assignment_name = Column(String(255), nullable=False)
     assignment_description = Column(String(255), nullable=False)
     assignment_due_date = Column(DateTime, nullable=False)
-    assignment_status = Column(String(50), default='active')
+    assignment_status = Column(String(50), default="active")
     assignment_course_id = Column(Integer, ForeignKey("courses.course_id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+
 
 # Pydantic schemas
 class UserCreate(BaseModel):
@@ -82,6 +107,7 @@ class UserCreate(BaseModel):
     password: str
     name: str
     phone_number: str
+
 
 class AdminCreate(BaseModel):
     school_name: str
@@ -91,13 +117,15 @@ class AdminCreate(BaseModel):
     admin_phone_number: str
     plan: str  # 'sml', 'mid', 'lrg'
 
+
 class UserResponse(BaseModel):
     id: int
     email: str
     name: str
-    
+
     class Config:
         from_attributes = True
+
 
 class AdminResponse(BaseModel):
     admin_id: int
@@ -106,9 +134,10 @@ class AdminResponse(BaseModel):
     admin_name: str
     subscription_type: str
     subscription_status: str
-    
+
     class Config:
         from_attributes = True
+
 
 class StudentResponse(BaseModel):
     student_id: int
@@ -116,22 +145,25 @@ class StudentResponse(BaseModel):
     student_email: str
     student_average_grade: int
     student_is_studying: bool
-    
+
     class Config:
         from_attributes = True
+
 
 class TeacherResponse(BaseModel):
     teacher_id: int
     teacher_name: str
     teacher_email: str
     teacher_is_active: bool
-    
+
     class Config:
         from_attributes = True
+
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+
 
 # Dependency to get database session
 def get_db():
@@ -139,4 +171,4 @@ def get_db():
     try:
         yield db
     finally:
-        db.close() 
+        db.close()

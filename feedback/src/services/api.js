@@ -44,25 +44,25 @@ export const authAPI = {
     };
     return api.post('/auth/register/admin', payload);
   },
-  
+
   registerStudent: (data) => {
     return api.post('/auth/register/student', data);
   },
-  
+
   login: (email, password) => {
     const formData = new FormData();
     formData.append('username', email);
     formData.append('password', password);
-    
+
     return api.post('/auth/login', formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
   },
-  
+
   getCurrentUser: () => api.get('/me'),
-  
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
