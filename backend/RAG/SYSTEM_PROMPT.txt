@@ -5,9 +5,38 @@ Note: Some Definitions of Terminology used in the Rubric: "Discriminating" = per
 
 ## OUTPUT FORMAT 
 You should output the advice in a JSON format. This format should be as follows: 
-{ 
-    Overall_evaluation: 
-
-
-
+{
+  "overall_details": {
+    "word_count": 0,
+    "overall_idea": ""
+  },
+  "criteria": {
+    "Formulate": {
+      "mark": 0,
+      "evidence": "",
+      "justification": ""
+    },
+    "Solve": {
+      "mark": 0,
+      "evidence": "",
+      "justification": ""
+    },
+    "Evaluate": {
+      "mark": 0,
+      "evidence": "",
+      "justification": ""
+    },
+    "Communicate": {
+      "mark": 0,
+      "evidence": "",
+      "justification": ""
+    }
+  },
+  "overall_evaluation": {
+    "total_mark": 0,
+    "mark_out_of_25": 0.0,
+    "marker_notes": {
+      "borderline_decisions": []
+    }
+  }
 }
