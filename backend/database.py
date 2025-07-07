@@ -7,7 +7,7 @@ import os
 from typing import Optional, List
 
 # Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://rag_user:super_secure_pw@localhost:5433/rag_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://localhost:5432/feedback4u_db")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -45,6 +45,7 @@ class Teacher(Base):
 class Student(Base):
     __tablename__ = "students"
     student_id = Column(Integer, primary_key=True)
+    school_student_id = Column(Integer, primary_key=True, nullable=False)
     student_email = Column(String(255), unique=True, nullable=False)
     student_name = Column(String(255), nullable=False)
     student_phone_number = Column(String(255), nullable=False)
