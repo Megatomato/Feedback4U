@@ -8,7 +8,7 @@ import { LandNav } from '../components/Navbar.jsx'
 const LoginPage = () => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
 
@@ -38,11 +38,11 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
 
-    const success = await login(formData.username.trim(), formData.password.trim());
-    if (success) {
+    const result = await login(formData.email.trim(), formData.password.trim());
+    if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('Invalid credentials. Use teacher/password or student/password');
+      setError(result.error || 'Invalid credentials');
       setIsLoading(false);
     }
   };
@@ -67,18 +67,18 @@ const LoginPage = () => {
               )}
 
               <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                <Form.Group controlId="username" className="mb-3">
-                  <Form.Label>Username</Form.Label>
+                <Form.Group controlId="email" className="mb-3">
+                  <Form.Label>Email</Form.Label>
                   <Form.Control
                     required
-                    type="username"
-                    placeholder="Enter your username"
-                    name="username"
+                    type="email"
+                    placeholder="Enter your email address"
+                    name="email"
                     value={formData.email}
                     onChange={handleChange}
                   />
                   <Form.Control.Feedback type="invalid">
-                    Please provide a valid username.
+                    Please provide a valid email address.
                   </Form.Control.Feedback>
                 </Form.Group>
 
