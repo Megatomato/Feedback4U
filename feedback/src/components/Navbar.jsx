@@ -16,7 +16,8 @@ function LandNav() {
           <Navbar.Brand href="/">Feedback4U</Navbar.Brand>
           <Nav className="ms-auto">
             <Nav.Link href="#pricing">Pricing</Nav.Link>
-            <Nav.Link href="/signup">Login</Nav.Link>
+            <Nav.Link href="/signup">Signup</Nav.Link>
+            <Nav.Link href="/login">Login</Nav.Link>
           </Nav>
         </Container>
       </Navbar>
@@ -39,9 +40,13 @@ function AdminNav() {
     <>
       <Navbar bg="primary" data-bs-theme="dark" fixed="top">
         <Container>
+        <Nav className="me-auto">
           <Image src={logo} rounded height="35px"/>
           <Navbar.Brand href="/admin/dashboard">Feedback4U</Navbar.Brand>
+        </Nav>
+        <Nav>
           <Logout/>
+        </Nav>
         </Container>
       </Navbar>
     </>
