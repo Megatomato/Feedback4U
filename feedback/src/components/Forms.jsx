@@ -5,6 +5,7 @@ import Alert from 'react-bootstrap/Alert';
 import Modal from 'react-bootstrap/Modal';
 import { sampleData } from '../data/sampleData';
 
+
 function AddStudentForm() {
   const [formData, setFormData] = useState({
     id: "",
@@ -16,6 +17,18 @@ function AddStudentForm() {
   const [validated, setValidated] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleReset = () => {
+    setFormData({
+      id: "",
+      name: "",
+      email: "",
+      phoneNumber: ""
+    });
+    setValidated(false);
+    setSubmitSuccess(false);
+    setIsSubmitting(false);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,8 +68,9 @@ function AddStudentForm() {
     <div>
      { submitSuccess ? (
        <Alert variant="success" className="text-center">
-         <Alert.Heading>Teacher Created Successfully</Alert.Heading>
+         <Alert.Heading>Student Created Successfully</Alert.Heading>
          <p>Need to think about how we are dealing with user / password here</p>
+         <Button variant="primary" onClick={handleReset}>Add new</Button>
        </Alert>
      ) : (
        <>
@@ -153,6 +167,19 @@ function AddTeacherForm() {
     }));
   };
 
+  const handleReset = () => {
+    setFormData({
+      id: "",
+      name: "",
+      email: "",
+      phoneNumber: ""
+    });
+    setValidated(false);
+    setSubmitSuccess(false);
+    setIsSubmitting(false);
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -185,6 +212,7 @@ function AddTeacherForm() {
        <Alert variant="success" className="text-center">
          <Alert.Heading>Teacher Created Successfully</Alert.Heading>
          <p>Need to think about how we are dealing with user / password here</p>
+         <Button variant="primary" onClick={handleReset}>Add new</Button>
        </Alert>
      ) : (
        <>

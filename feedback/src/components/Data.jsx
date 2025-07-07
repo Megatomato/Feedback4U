@@ -1,12 +1,16 @@
 import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
 import { useNavigate } from 'react-router-dom';
 
 function ATable(props) {
   const navigate = useNavigate();
 
   return (
-    <Table striped bordered hover>
+    <div>
+    <h1> Edit / View Courses </h1>
+    <Table striped hover>
       <tbody>
         {props.data.map((row) => (
           <tr
@@ -14,29 +18,39 @@ function ATable(props) {
             onClick={() => navigate('/courses')}
             style={{ cursor: 'pointer' }}
           >
-            <td>{row.id}</td>
-            <td>
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  console.log("Change teacher clicked")
-                }}
-              >
-                Change Assigned Teacher
-              </Button>
-              <span className="mx-2">-</span>
-              {row.first}
+            <td className="col-2">{row.id}</td>
+            <td className="col-6">
+              <Col>
+                <Row className="justify-content-center">
+                  {row.first}
+                </Row>
+                <Row>
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("Change teacher clicked")
+                    }}
+                  >
+                    Change Assigned Teacher
+                  </Button>
+                </Row>
+              </Col>
             </td>
-            <td onClick={(e) => e.stopPropagation()}>
+            <td
+              className="text-center align-middle col-3"
+              onClick={(e) => e.stopPropagation()}
+              style={{ padding: "0.5rem" }}  // Optional: Adjust padding if needed
+            >
               <Button
                 variant="outline-secondary"
-                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log("Change teacher clicked")
+                  console.log("Edit clicked");
                 }}
+                className="mx-auto"  // Centers button horizontally
+                style={{ display: "block" }}  // Makes mx-auto work
               >
                 Edit Students
               </Button>
@@ -45,6 +59,7 @@ function ATable(props) {
         ))}
       </tbody>
     </Table>
+    </div>
   );
 }
 export { ATable };

@@ -86,6 +86,8 @@ const AssignmentDetailsPage = () => {
                 <p>{assignment.description}</p>
               </div>
 
+              <Button className="mb-4" href={'/assignment/${id}/submission'}> Start a new submission </Button>
+
               {currentUser.role === 'student' && submission && (
                 <div className="mb-4">
                   <h5>Your Submission</h5>
