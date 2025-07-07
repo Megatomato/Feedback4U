@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col, Alert, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { LandNav } from '../components/Navbar.jsx'
 
 const SignupPage = () => {
   const navigate = useNavigate();
+  const { registerAdmin } = useAuth();
 
   // NOTE: the data that is being sent
   const [formData, setFormData] = useState({
@@ -40,19 +42,24 @@ const SignupPage = () => {
     setIsSubmitting(true);
 
     try {
-      // NOTE: API call would be here
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
       console.log('Form submitted:', formData);
-      setSubmitSuccess(true);
-      setValidated(true);
-
-      // Redirect after successful signup
-      // NOTE: this may be an if to deal with student / admin / teacher or a redirect when
-            // at dash?
-      setTimeout(() => navigate('/dashboard'), 2000);
+      
+      // Call the actual registration API
+      const result = await registerAdmin(formData);
+      
+      if (result.success) {
+        setSubmitSuccess(true);
+        setValidated(true);
+        
+        // Redirect after successful signup
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        throw new Error(result.error || 'Registration failed');
+      }
     } catch (error) {
       console.error('Signup error:', error);
+      // Show error to user
+      alert('Registration failed: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +94,7 @@ const SignupPage = () => {
                 {submitSuccess ? (
                   <Alert variant="success" className="text-center">
                     <Alert.Heading>Account Created Successfully!</Alert.Heading>
-                    <p>Welcome aboard! Redirecting you to your dashboard...</p>
+                    <p>Welcome aboard! Redirecting you to login page...</p>
                   </Alert>
                 ) : (
                   <>

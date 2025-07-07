@@ -87,11 +87,10 @@ def generate_and_store_feedback(student_id: str, assignment_id: str, course_id: 
         rubric_ctx = topk_rubric(session, course_id, qvec, k=4)
         assign_ctx = topk_assignment(session, assignment_id, qvec, k=6)
 
-    # ----- build prompt ------------------------------------------------
-    SYSTEM_PROMPT = (
-        "You are an AI marker. Use [RUBRIC] strictly to grade [ASSIGNMENT]. "
-        "Return JSON: {'mark': int, 'strengths': str, 'weaknesses': str, 'advice': str}."
-    )
+    prompt_file_path = os.path.join(os.path.dirname(__file__), "SYSTEM_PROMPT.txt")
+    with open(prompt_file_path, "r") as f:
+        SYSTEM_PROMPT = f.read().strip()
+    
     ctx_block = "[RUBRIC]\\n" + "\\n".join(rubric_ctx) + "\\n\\n[ASSIGNMENT]\\n" + "\\n".join(assign_ctx)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -99,7 +98,6 @@ def generate_and_store_feedback(student_id: str, assignment_id: str, course_id: 
         {"role": "user", "content": "Provide holistic feedback and a mark out of 20."},
     ]
 
-    # ----- call LLM ----------------------------------------------------
     llm = LLM(provider)
     feedback_json = llm.generate(messages)
 
