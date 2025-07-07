@@ -1,23 +1,34 @@
-  # --- LangChain ecosystem ---
-   langchain 
-   langchain-community 
-   langchain-openai 
-   langchain-huggingface 
-   langchain-experimental 
+# --- FastAPI and web framework ---
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+python-multipart
+pydantic>=2.0
 
-   # --- LLM / embedding providers ---
-   openai 
-   google-generativeai 
-   requests 
+# --- Authentication ---
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7
+email-validator>=2.0 
 
-   # --- Database / vector search ---
-   sqlalchemy 
-   pgvector 
-   psycopg2-binary 
+# --- LangChain ecosystem ---
+langchain 
+langchain-community 
+langchain-openai 
+langchain-huggingface 
+langchain-experimental 
 
-   # --- PDF handling ---
-   PyMuPDF 
-   pypdf 
+# --- LLM / embedding providers ---
+openai>=1.0
+google-generativeai 
+requests 
 
-   # --- Utilities ---
-   python-dotenv 
+# --- Database / vector search ---
+sqlalchemy>=2.0
+pgvector>=0.2
+psycopg2-binary>=2.9
+
+# --- PDF handling ---
+PyMuPDF 
+pypdf 
+
+# --- Utilities ---
+python-dotenv

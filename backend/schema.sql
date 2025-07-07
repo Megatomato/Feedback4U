@@ -29,16 +29,17 @@ CREATE TABLE teachers (
 );
 
 CREATE TABLE students (
-    student_id SERIAL PRIMARY KEY,
+    student_id SERIAL,
+    school_student_id INTEGER NOT NULL,
     student_email VARCHAR(255) UNIQUE NOT NULL,
     student_name VARCHAR(255) NOT NULL,
     student_phone_number VARCHAR(255) NOT NULL,
     student_password_hash VARCHAR(255) NOT NULL,
     student_average_grade INTEGER NOT NULL,
     student_is_studying BOOLEAN NOT NULL,
-    assigned_teacher_id INTEGER NOT NULL REFERENCES teachers(teacher_id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (student_id, school_student_id)
 );
 
 CREATE TABLE courses (
@@ -53,10 +54,12 @@ CREATE TABLE courses (
 
 CREATE TABLE enrollments (
     enrollment_id SERIAL PRIMARY KEY,
-    student_id INTEGER NOT NULL REFERENCES students(student_id),
+    student_id INTEGER NOT NULL,
+    school_student_id INTEGER NOT NULL,
     course_id INTEGER NOT NULL REFERENCES courses(course_id),
     enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(student_id, course_id)
+    FOREIGN KEY (student_id, school_student_id) REFERENCES students(student_id, school_student_id),
+    UNIQUE(student_id, school_student_id, course_id)
 );
 
 CREATE TABLE assignments (
@@ -71,19 +74,20 @@ CREATE TABLE assignments (
 );
 
 CREATE TABLE submitted_assignments (
-    submitted_assignment_id SERIAL PRIMARY KEY,
-    submitted_assignment_student_id INTEGER NOT NULL REFERENCES students(student_id),
+    submission_id SERIAL PRIMARY KEY,
+    submitted_assignment_student_id INTEGER NOT NULL,
+    submitted_assignment_school_student_id INTEGER NOT NULL,
     submitted_assignment_assignment_id INTEGER NOT NULL REFERENCES assignments(assignment_id),
     submission_status VARCHAR(50) DEFAULT 'submitted' CHECK (submission_status IN ('submitted', 'graded')),
     ai_feedback TEXT,
     ai_grade DECIMAL(5, 2)[],
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    graded_at TIMESTAMP
+    graded_at TIMESTAMP,
+    FOREIGN KEY (submitted_assignment_student_id, submitted_assignment_school_student_id) REFERENCES students(student_id, school_student_id)
 );
 
 -- Performance indexes
 CREATE INDEX idx_teachers_school_admin ON teachers(school_admin_id);
-CREATE INDEX idx_students_teacher ON students(assigned_teacher_id);
 CREATE INDEX idx_courses_teacher ON courses(course_teacher_id);
 CREATE INDEX idx_assignments_course ON assignments(assignment_course_id);
 
