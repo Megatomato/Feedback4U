@@ -35,7 +35,7 @@ DB_URL          = os.getenv("DATABASE_URL")
 OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
 # GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY")
 DEEPSEEK_API_KEY= os.getenv("DEEPSEEK_API_KEY")
-GITEE_API_KEY = os.getenv("GITEE_API_KEY") 
+GITEE_API_KEY = os.getenv("GITEE_API_KEY")
 
 
 
@@ -52,10 +52,10 @@ class AssignmentChunk(Base):
     embedding     = Column(pgvector.sqlalchemy.Vector(), nullable=False)   # no argument
 
 class ReferenceChunk(Base):
-    __tablename__ = "reference_chunks"          
+    __tablename__ = "reference_chunks"
     id            = Column(BigInteger, primary_key=True)
     course_id     = Column(Text,  nullable=False)
-    doc_type      = Column(Text,  nullable=False)  
+    doc_type      = Column(Text,  nullable=False)
     heading_path  = Column(Text)
     content       = Column(Text, nullable=False)
     embedding     = Column(pgvector.sqlalchemy.Vector(), nullable=False)
@@ -66,7 +66,7 @@ class Feedback(Base):
     student_id    = Column(Text, nullable=False)
     assignment_id = Column(Text, nullable=False)
     course_id     = Column(Text, nullable=False)
-    data          = Column(Text, nullable=False)   
+    data          = Column(Text, nullable=False)
 
 
 class EmbeddingModel:
@@ -86,8 +86,8 @@ class EmbeddingModel:
         else:
             self.model = HuggingFaceEmbeddings(
                 model_name="Qwen/Qwen3-Embedding-0.6B",
-                model_kwargs={"device": "cpu"},        
-                encode_kwargs={"batch_size": 8},       
+                model_kwargs={"device": "cpu"},
+                encode_kwargs={"batch_size": 8},
             )
             self.dimensions = 1024
 
@@ -96,12 +96,12 @@ class EmbeddingModel:
         if hasattr(self.model, "embed_documents"):
             return self.model.embed_documents(texts)
         elif hasattr(self.model, "embed"):
-            return self.model.embed(texts)  
-        else:  
+            return self.model.embed(texts)
+        else:
             return [self.model.embed_query(t) for t in texts]
 
 
-    
+
 def run_chunker(file_path: str, strategy: str) -> List[str]:
     if strategy == "recursive" and recursive_chunker:
         return recursive_chunker(file_path)
@@ -155,7 +155,7 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
     with engine.begin() as conn:
         try:
             conn.execute(sqltext("CREATE EXTENSION IF NOT EXISTS vector"))
-        except ProgrammingError: 
+        except ProgrammingError:
             raise
 
     Base.metadata.create_all(engine)
@@ -196,7 +196,7 @@ def ingest_reference_file(file_path: str, course_id: str, doc_type: str,
     with engine.begin() as conn:
         try:
             conn.execute(sqltext("CREATE EXTENSION IF NOT EXISTS vector"))
-        except ProgrammingError: 
+        except ProgrammingError:
             raise
 
     Base.metadata.create_all(engine)
