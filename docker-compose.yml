@@ -40,7 +40,7 @@ services:
       - "8081:8081"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../backend/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
@@ -68,21 +68,21 @@ services:
 #    depends_on:
 #      - db
 
-#  frontend:
-#    build:
-#      dockerfile: Dockerfile
-#      context: ./feedback
-#    restart: always
-#    volumes:
-#      - ./frontend/src:/app/src
-#      - /app/node_modules
-#      - /app/.next
-#    environment:
-#      NEXT_PUBLIC_API_URL: "http://localhost:8000"
-#    ports:
-#      - 3000:3000
-#    depends_on:
-#      - backend
+  frontend:
+    build:
+      dockerfile: Dockerfile
+      context: ./feedback
+    restart: always
+    volumes:
+      - ./frontend/src:/app/src
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+    ports:
+      - 3000:3000
+    depends_on:
+      - backend
 
 
 volumes:
