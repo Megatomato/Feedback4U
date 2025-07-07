@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "start": "cd feedback && npm start",
+    "install": "cd feedback && npm install"
+  }
+}
