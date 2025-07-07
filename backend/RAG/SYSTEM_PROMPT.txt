@@ -34,9 +34,10 @@ You should output the advice in a JSON format. This format should be as follows:
   },
   "overall_evaluation": {
     "total_mark": 0,
-    "mark_out_of_25": 0.0,
+    "mark_out_of_20": 0.0,
     "marker_notes": {
       "borderline_decisions": []
-    }
+    },
+    "feedback for improvement": ""
   }
 }
