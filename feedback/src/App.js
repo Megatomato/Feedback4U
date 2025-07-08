@@ -8,7 +8,7 @@ import './custom.scss';
 import Home from './pages';
 import SignupPage from './pages/signup';
 import LoginPage from './pages/login';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/dashboard';
 import CoursesPage from './pages/courses-page';
 import CoursePage from './pages/course-page';
 import AssignmentDetailsPage from './pages/assignment-detail';
