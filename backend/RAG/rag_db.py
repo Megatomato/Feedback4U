@@ -9,15 +9,15 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import ProgrammingError
 import pgvector.sqlalchemy
-from backend.RAG.preprocessing.preprocessing2 import run as semantic_chunker
-from backend.RAG.preprocessing.preprocessing import run as recursive_chunker
+from preprocessing.preprocessing2 import run as semantic_chunker
+from preprocessing.preprocessing import run as recursive_chunker
 from sqlalchemy import text as sqltext
 
 
 # # Embedding providers
 # Always import the OpenAI implementation – tests patch the *origin* library path.
 from langchain_openai import OpenAIEmbeddings
-from backend.RAG.gitee_embeddings import GiteeAIEmbeddings
+from gitee_embeddings import GiteeAIEmbeddings
 # from langchain_google_genai import GoogleGenerativeAIEmbeddings  # gemini
 
 # Import the HuggingFace implementation **only if** it has not been monkey-patched already.
@@ -116,6 +116,26 @@ def extract_text(file_path: str) -> str:
     with fitz.open(file_path) as doc:
         return "".join(page.get_text() for page in doc)
 
+def clean_chunks(chunks: List[str]) -> List[str]:
+    """Removes junk chunks and page headers/footers."""
+    cleaned = []
+    for chunk in chunks:
+        # 1. Strip whitespace
+        chunk = chunk.strip()
+        # 2. Filter out chunks that are empty or very short
+        if len(chunk) < 10:
+            continue
+        # 3. Filter out repetitive headers/footers
+        lines = chunk.split('\n')
+        if "general mathematics 2019 v1.2" in lines[0].lower():
+            continue
+        if "queensland curriculum & assessment authority" in chunk.lower():
+            continue
+        # 4. Filter out chunks that seem to be just metadata
+        if chunk.startswith("Table of contents") or chunk.startswith("7 Appendixes"):
+            continue
+        cleaned.append(chunk)
+    return cleaned
 # ---------------------------------------------------------------------
 # 5.  Helper: fetch top‑k with pgvector HNSW via text SQL
 # ---------------------------------------------------------------------
@@ -169,7 +189,22 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
         chunks = [c["content"] if isinstance(c, dict) else str(c) for c in splitter_texts]
 
     chunks = [chunk.replace('\x00', '') for chunk in chunks]
-    vectors = embedder.embed(chunks)
+
+    # Clean the chunks to remove headers, footers, and junk
+    chunks = clean_chunks(chunks)
+
+    # ADDED FOR DEBUGGING: Log chunks and filter empty ones
+    # logging.info("---BEGIN CHUNKS---")
+    # for i, chunk in enumerate(chunks):
+    #     logging.info(f"Chunk {i+1}: '{chunk}'")
+    # logging.info("---END CHUNKS---")
+    
+    sanitized_chunks = [chunk for chunk in chunks if chunk and chunk.strip()]
+    if not sanitized_chunks:
+        logging.warning("No non-empty chunks found after cleaning. Skipping embedding.")
+        return None
+
+    vectors = embedder.embed(sanitized_chunks)
 
     objects = [
         AssignmentChunk(student_id=student_id,
@@ -178,7 +213,7 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
                         chunk_no=i + 1,
                         content=txt,
                         embedding=vec)
-        for i, (txt, vec) in enumerate(zip(chunks, vectors))
+        for i, (txt, vec) in enumerate(zip(sanitized_chunks, vectors))
     ]
 
     with Session.begin() as session:
