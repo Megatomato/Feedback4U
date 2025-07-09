@@ -2,14 +2,17 @@ import os
 import sys
 import tempfile
 import logging
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from datetime import datetime
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, status
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 import uvicorn
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from rag_db import ingest_file, ingest_reference_file
+from rag_db import ingest_file, ingest_reference_file, get_db_session as get_db
 from llm import generate_and_store_feedback
 from statistics_api import router as statistics_router
 
@@ -22,6 +25,29 @@ app = FastAPI(
 )
 
 app.include_router(statistics_router)
+
+@app.get("/health")
+async def health_check(db: Session = Depends(get_db)):
+    try:
+        # Try to execute a simple query to check DB connection
+        db.execute(text("SELECT 1"))
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "unhealthy",
+                "database": "disconnected",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+    finally:
+        db.close()
 
 @app.post("/upload-reference/", summary="Upload a reference document")
 async def upload_reference(
