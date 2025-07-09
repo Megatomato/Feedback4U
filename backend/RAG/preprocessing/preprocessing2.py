@@ -1,9 +1,9 @@
 import os
 import fitz
 from dotenv import load_dotenv
-from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
 from typing import List
+
 
 def run(file_path: str) -> List[str]:
     """
@@ -20,7 +20,7 @@ def run(file_path: str) -> List[str]:
     except Exception as e:
         print(f"Error opening file {file_path}: {e}")
         return []
-        
+
     text = ""
     for page in doc:
         text += page.get_text()
@@ -34,21 +34,21 @@ def run(file_path: str) -> List[str]:
     )
 
     docs = text_splitter.create_documents([text])
-    
+
     return [d.page_content for d in docs]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     pdf_file = "../../../ragdb/training-data/feedback-data/[TEST] PSMT.pdf"
-    
-    
+
     try:
         chunks = run(pdf_file)
         if chunks:
             print(f"Successfully created {len(chunks)} chunks.")
             print("First chunk:", chunks[0])
-        
+
             # Write chunks to log2.txt
-            with open('log2.txt', 'w') as f:
+            with open("log2.txt", "w") as f:
                 f.write(str(chunks))
             print("Chunks written to log2.txt")
 
