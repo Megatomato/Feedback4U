@@ -6,8 +6,8 @@ import logging
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from backend.RAG.rag_db import ingest_file, ingest_reference_file
-from backend.RAG.llm import generate_and_store_feedback
+from rag_db import ingest_file, ingest_reference_file
+from llm import generate_and_store_feedback
 
 logging.basicConfig(level=logging.INFO)
 

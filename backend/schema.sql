@@ -29,7 +29,7 @@ CREATE TABLE teachers (
 );
 
 CREATE TABLE students (
-    student_id SERIAL,
+    student_id SERIAL PRIMARY KEY,
     school_student_id INTEGER NOT NULL,
     student_email VARCHAR(255) UNIQUE NOT NULL,
     student_name VARCHAR(255) NOT NULL,
@@ -38,8 +38,7 @@ CREATE TABLE students (
     student_average_grade INTEGER NOT NULL,
     student_is_studying BOOLEAN NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (student_id, school_student_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE courses (
@@ -54,12 +53,10 @@ CREATE TABLE courses (
 
 CREATE TABLE enrollments (
     enrollment_id SERIAL PRIMARY KEY,
-    student_id INTEGER NOT NULL,
-    school_student_id INTEGER NOT NULL,
+    student_id INTEGER NOT NULL REFERENCES students(student_id),
     course_id INTEGER NOT NULL REFERENCES courses(course_id),
     enrollment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (student_id, school_student_id) REFERENCES students(student_id, school_student_id),
-    UNIQUE(student_id, school_student_id, course_id)
+    UNIQUE(student_id, course_id)
 );
 
 CREATE TABLE assignments (
@@ -75,15 +72,13 @@ CREATE TABLE assignments (
 
 CREATE TABLE submitted_assignments (
     submission_id SERIAL PRIMARY KEY,
-    submitted_assignment_student_id INTEGER NOT NULL,
-    submitted_assignment_school_student_id INTEGER NOT NULL,
+    submitted_assignment_student_id INTEGER NOT NULL REFERENCES students(student_id),
     submitted_assignment_assignment_id INTEGER NOT NULL REFERENCES assignments(assignment_id),
     submission_status VARCHAR(50) DEFAULT 'submitted' CHECK (submission_status IN ('submitted', 'graded')),
     ai_feedback TEXT,
     ai_grade DECIMAL(5, 2)[],
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    graded_at TIMESTAMP,
-    FOREIGN KEY (submitted_assignment_student_id, submitted_assignment_school_student_id) REFERENCES students(student_id, school_student_id)
+    graded_at TIMESTAMP
 );
 
 -- Performance indexes

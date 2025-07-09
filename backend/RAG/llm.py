@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from backend.RAG.rag_db import topk_rubric, topk_assignment, Feedback
+from rag_db import topk_rubric, topk_assignment, Feedback
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)

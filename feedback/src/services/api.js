@@ -89,4 +89,27 @@ export const adminAPI = {
   getAll: () => api.get('/admins'),
 };
 
+// Course API calls
+export const courseAPI = {
+  create: (data) => api.post('/courses', data),
+  getAll: () => api.get('/courses'),
+  getById: (id) => api.get(`/courses/${id}`),
+};
+
+// Assignment API calls
+export const assignmentAPI = {
+  create: (data) => api.post('/assignments', data),
+  getById: (id) => api.get(`/assignments/${id}`),
+  getForCourse: (courseId) => api.get(`/courses/${courseId}/assignments`),
+  submit: (assignmentId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/assignments/${assignmentId}/submit`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+};
+
 export default api;

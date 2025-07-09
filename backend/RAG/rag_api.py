@@ -9,8 +9,9 @@ import uvicorn
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from backend.RAG.rag_db import ingest_file, ingest_reference_file
-from backend.RAG.llm import generate_and_store_feedback
+from rag_db import ingest_file, ingest_reference_file
+from llm import generate_and_store_feedback
+from statistics_api import router as statistics_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,6 +20,8 @@ app = FastAPI(
     description="API for interacting with the RAG backend for student feedback.",
     version="0.1.0",
 )
+
+app.include_router(statistics_router)
 
 
 @app.post("/upload-reference/", summary="Upload a reference document")

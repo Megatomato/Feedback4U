@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Button, ProgressBar } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
-import { sampleData } from '../data/sampleData';
+import { courseAPI, assignmentAPI } from '../services/api';
 import { AssignmentCard } from '../components/Cards';
 import { StudentNav } from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -10,9 +10,24 @@ const CoursePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const [course, setCourse] = useState(null);
+  const [assignments, setAssignments] = useState([]);
 
-  const course = sampleData.courses.find(c => c.id === parseInt(id));
-  const courseAssignments = sampleData.assignments.filter(a => a.courseId === parseInt(id));
+  useEffect(() => {
+    const fetchCourseData = async () => {
+      try {
+        const courseRes = await courseAPI.getById(id);
+        setCourse(courseRes.data);
+        const assignmentsRes = await assignmentAPI.getForCourse(id);
+        setAssignments(assignmentsRes.data);
+      } catch (error) {
+        console.error("Failed to fetch course data:", error);
+      }
+    };
+    if (id) {
+      fetchCourseData();
+    }
+  }, [id]);
 
   if (!course) {
     return (
@@ -32,57 +47,38 @@ const CoursePage = () => {
     navigate(`/assignment/${assignmentId}`);
   };
 
+  const completionRate = course.completionRate || 75; // Placeholder
+  const students = course.students || 0; // Placeholder
+
   return (
     <div>
-    <StudentNav/>
+    <StudentNav />
     <Container className="my-4">
-      <Row className="mb-4">
-        <Col>
-          <Button
-            variant="outline-secondary"
-            onClick={() => navigate('/dashboard')}
-            className="mb-3"
-          >
-            ← Back to Dashboard
-          </Button>
-
-          <div className="d-flex justify-content-between align-items-start">
-            <div>
-              <h1>{course.name}</h1>
-              <Badge bg="primary" className="mb-2">{course.code}</Badge>
-              <p className="text-muted mb-2">{course.description}</p>
-              <p className="mb-0">
-                <strong>Instructor:</strong> {course.instructor}
-              </p>
-            </div>
-            <div className="text-end">
-              <h3 className="text-primary">{course.completionRate}%</h3>
-              <small className="text-muted">Completion Rate</small>
-              <ProgressBar
-                now={course.completionRate}
-                variant={course.completionRate >= 80 ? 'success' : course.completionRate >= 60 ? 'warning' : 'danger'}
-                className="mt-1"
-              />
-            </div>
-          </div>
-        </Col>
-      </Row>
-
+      <div className="d-flex align-items-center mb-4">
+        <Button variant="outline-secondary" onClick={() => navigate(-1)} className="me-3">
+          <i className="bi bi-arrow-left"></i>
+        </Button>
+        <div>
+          <h1 className="mb-0">{course.course_name}</h1>
+          <p className="text-muted mb-0">{course.course_description}</p>
+        </div>
+      </div>
+      
       <Row>
         <Col lg={8}>
           <Card>
             <Card.Header>
               <h5 className="mb-0">Course Assignments</h5>
-              <small className="text-muted">{courseAssignments.length} assignments</small>
+              <small className="text-muted">{assignments.length} assignments</small>
             </Card.Header>
             <Card.Body>
-              {courseAssignments.length > 0 ? (
-                courseAssignments.map(assignment => (
+              {assignments.length > 0 ? (
+                assignments.map(assignment => (
                   <AssignmentCard
-                    key={assignment.id}
+                    key={assignment.assignment_id}
                     assignment={assignment}
-                    courseName={course.name}
-                    onClick={() => handleAssignmentClick(assignment.id)}
+                    courseName={course.course_name}
+                    onClick={() => handleAssignmentClick(assignment.assignment_id)}
                   />
                 ))
               ) : (
@@ -100,49 +96,25 @@ const CoursePage = () => {
             <Card.Body>
               <div className="d-flex justify-content-between mb-2">
                 <span>Total Students:</span>
-                <strong>{course.students}</strong>
+                <strong>{students}</strong>
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>Total Assignments:</span>
-                <strong>{courseAssignments.length}</strong>
+                <strong>{assignments.length}</strong>
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>Completion Rate:</span>
-                <strong>{course.completionRate}%</strong>
+                <strong>{completionRate}%</strong>
               </div>
               <div className="d-flex justify-content-between">
                 <span>Average Submissions:</span>
                 <strong>
-                  {courseAssignments.length > 0
-                    ? Math.round(courseAssignments.reduce((sum, a) => sum + a.submissionCount, 0) / courseAssignments.length)
-                    : 0
-                  }
+                  {/* Placeholder */}
+                  0
                 </strong>
               </div>
             </Card.Body>
           </Card>
-
-          {currentUser.role === 'student' && (
-            <Card className="mt-3">
-              <Card.Header>
-                <h6 className="mb-0">My Performance</h6>
-              </Card.Header>
-              <Card.Body>
-                <div className="d-flex justify-content-between mb-2">
-                  <span>Course Average:</span>
-                  <Badge bg="success">92%</Badge>
-                </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span>Assignments Completed:</span>
-                  <strong>8/10</strong>
-                </div>
-                <div className="d-flex justify-content-between">
-                  <span>Pending Submissions:</span>
-                  <strong>2</strong>
-                </div>
-              </Card.Body>
-            </Card>
-          )}
         </Col>
       </Row>
     </Container>
