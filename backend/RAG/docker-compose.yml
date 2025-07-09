@@ -4,9 +4,9 @@ services:
     container_name: rag-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: user  
-      POSTGRES_PASSWORD: password  
-      POSTGRES_DB: rag_db 
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rag_db
     ports:
       - "5432:5432"
     volumes:

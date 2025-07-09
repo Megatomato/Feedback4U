@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File, F
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
@@ -21,6 +22,7 @@ from database import (
     Assignment,
     SubmittedAssignment,
     UserCreate,
+    TeacherCreate,
     AdminCreate,
     UserResponse,
     AdminResponse,
@@ -117,7 +119,7 @@ async def root():
 async def health_check(db: Session = Depends(get_db)):
     try:
         # Test database connection with a simple query
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         return {
             "status": "healthy",
             "database": "connected",
@@ -193,6 +195,28 @@ async def register_admin(admin: AdminCreate, db: Session = Depends(get_db)):
         admin_name=db_admin.admin_name,
         subscription_type=db_admin.subscription_type,
         subscription_status=db_admin.subscription_status,
+    )
+
+
+@app.post("/auth/register/teacher", response_model=UserResponse)
+async def register_teacher(user: TeacherCreate, db: Session = Depends(get_db)):
+    if db.query(Teacher).filter(Teacher.teacher_email == user.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    db_teacher = Teacher(
+        school_admin_id=user.school_admin_id,
+        teacher_email=user.email,
+        teacher_name=user.name,
+        teacher_phone_number=user.phone_number,
+        teacher_password_hash=get_password_hash(user.password),
+        teacher_is_active=True,
+    )
+    db.add(db_teacher)
+    db.commit()
+    db.refresh(db_teacher)
+
+    return UserResponse(
+        id=db_teacher.teacher_id, email=db_teacher.teacher_email, name=db_teacher.teacher_name
     )
 
 
@@ -286,21 +310,26 @@ async def get_admins(current_user=Depends(get_current_user), db: Session = Depen
 async def get_current_user_info(current_user=Depends(get_current_user)):
     return current_user
 
+
 # Course and Assignment Routes
 @app.post("/courses", response_model=CourseResponse, status_code=status.HTTP_201_CREATED)
-def create_course(course: CourseCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def create_course(
+    course: CourseCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     if not isinstance(current_user, Teacher):
         raise HTTPException(status_code=403, detail="Only teachers can create courses")
-    
+
     db_course = Course(**course.model_dump(), course_is_active=True)
     db.add(db_course)
     db.commit()
     db.refresh(db_course)
     return db_course
 
+
 @app.get("/courses", response_model=List[CourseResponse])
 def get_all_courses(db: Session = Depends(get_db)):
     return db.query(Course).all()
+
 
 @app.get("/courses/{course_id}", response_model=CourseResponse)
 def get_course(course_id: int, db: Session = Depends(get_db)):
@@ -309,16 +338,22 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Course not found")
     return course
 
+
 @app.post("/assignments", response_model=AssignmentResponse, status_code=status.HTTP_201_CREATED)
-def create_assignment(assignment: AssignmentCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def create_assignment(
+    assignment: AssignmentCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     if not isinstance(current_user, Teacher):
         raise HTTPException(status_code=403, detail="Only teachers can create assignments")
-        
+
     db_assignment = Assignment(**assignment.model_dump())
     db.add(db_assignment)
     db.commit()
     db.refresh(db_assignment)
     return db_assignment
+
 
 @app.get("/assignments/{assignment_id}", response_model=AssignmentResponse)
 def get_assignment(assignment_id: int, db: Session = Depends(get_db)):
@@ -327,17 +362,19 @@ def get_assignment(assignment_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Assignment not found")
     return assignment
 
+
 @app.get("/courses/{course_id}/assignments", response_model=List[AssignmentResponse])
 def get_assignments_for_course(course_id: int, db: Session = Depends(get_db)):
     assignments = db.query(Assignment).filter(Assignment.assignment_course_id == course_id).all()
     return assignments
+
 
 @app.post("/assignments/{assignment_id}/submit", response_model=SubmissionResponse)
 async def submit_assignment(
     assignment_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: Student = Depends(get_current_user)
+    current_user: Student = Depends(get_current_user),
 ):
     if not isinstance(current_user, Student):
         raise HTTPException(status_code=403, detail="Only students can submit assignments")
@@ -348,13 +385,13 @@ async def submit_assignment(
 
     # 1. Call RAG API to get feedback
     rag_api_url = os.getenv("RAG_API_URL", "http://localhost:8082")
-    files = {'file': (file.filename, await file.read(), file.content_type)}
+    files = {"file": (file.filename, await file.read(), file.content_type)}
     data = {
         "student_id": str(current_user.student_id),
         "assignment_id": str(assignment_id),
-        "course_id": str(assignment.assignment_course_id)
+        "course_id": str(assignment.assignment_course_id),
     }
-    
+
     feedback_json = {}
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:
@@ -374,30 +411,32 @@ async def submit_assignment(
     new_submission = SubmittedAssignment(
         submitted_assignment_student_id=current_user.student_id,
         submitted_assignment_assignment_id=assignment_id,
-        submission_status='graded',
+        submission_status="graded",
         ai_feedback=feedback_text,
         ai_grade=grade_list,
-        graded_at=datetime.utcnow()
+        graded_at=datetime.utcnow(),
     )
     db.add(new_submission)
     db.commit()
     db.refresh(new_submission)
-    
+
     # 3. Trigger statistics update
     try:
-        course = db.query(Course).filter(Course.course_id == assignment.assignment_course_id).first()
+        course = (
+            db.query(Course).filter(Course.course_id == assignment.assignment_course_id).first()
+        )
         # Assume average grade for now
         avg_grade = sum(grade_list) / len(grade_list) if grade_list else 0
 
         stats_payload = {
             "student_id": current_user.student_id,
             "course_name": course.course_name if course else "Unknown Course",
-            "grade": avg_grade
+            "grade": avg_grade,
         }
         feedback_payload = {
             "student_id": current_user.student_id,
             "course_name": course.course_name if course else "Unknown Course",
-            "feedback": feedback_text
+            "feedback": feedback_text,
         }
         async with httpx.AsyncClient() as client:
             await client.post(f"{rag_api_url}/statistics/submissions", json=stats_payload)

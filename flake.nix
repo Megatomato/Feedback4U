@@ -33,6 +33,7 @@
             pkgs.python313Packages.pypdf
             pkgs.python313Packages.pgvector
             pkgs.python313Packages.google-generativeai
+            pkgs.python313Packages.bcrypt
         ];
       };
     });

@@ -102,12 +102,17 @@ class Assignment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
 
+
 class SubmittedAssignment(Base):
     __tablename__ = "submitted_assignments"
     submission_id = Column(Integer, primary_key=True, autoincrement=True)
-    submitted_assignment_student_id = Column(Integer, ForeignKey("students.student_id"), nullable=False)
-    submitted_assignment_assignment_id = Column(Integer, ForeignKey("assignments.assignment_id"), nullable=False)
-    submission_status = Column(String(50), default='submitted')
+    submitted_assignment_student_id = Column(
+        Integer, ForeignKey("students.student_id"), nullable=False
+    )
+    submitted_assignment_assignment_id = Column(
+        Integer, ForeignKey("assignments.assignment_id"), nullable=False
+    )
+    submission_status = Column(String(50), default="submitted")
     ai_feedback = Column(Text)
     ai_grade = Column(ARRAY(DECIMAL(5, 2)))
     uploaded_at = Column(DateTime, default=datetime.utcnow)
@@ -115,6 +120,14 @@ class SubmittedAssignment(Base):
 
 
 # Pydantic schemas
+class TeacherCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    phone_number: str
+    school_admin_id: int
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -179,6 +192,7 @@ class CourseCreate(BaseModel):
     course_description: str
     course_teacher_id: int
 
+
 class CourseResponse(BaseModel):
     course_id: int
     course_name: str
@@ -189,11 +203,13 @@ class CourseResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AssignmentCreate(BaseModel):
     assignment_name: str
     assignment_description: str
     assignment_due_date: datetime
     assignment_course_id: int
+
 
 class AssignmentResponse(BaseModel):
     assignment_id: int
@@ -205,6 +221,7 @@ class AssignmentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class SubmissionResponse(BaseModel):
     submission_id: int
