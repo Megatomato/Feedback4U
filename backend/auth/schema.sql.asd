@@ -92,8 +92,8 @@ CREATE INDEX idx_courses_teacher ON courses(course_teacher_id);
 CREATE INDEX idx_assignments_course ON assignments(assignment_course_id);
 
 -- Data validation constraints
-ALTER TABLE submitted_assignments ADD CONSTRAINT check_grade_range 
+ALTER TABLE submitted_assignments ADD CONSTRAINT check_grade_range
     CHECK (ai_grade >= 0 AND ai_grade <= 100);
-    
-ALTER TABLE assignments ADD CONSTRAINT check_due_date 
+
+ALTER TABLE assignments ADD CONSTRAINT check_due_date
     CHECK (assignment_due_date > created_at);

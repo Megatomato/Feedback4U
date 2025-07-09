@@ -59,4 +59,4 @@ class GiteeAIEmbeddings:
         resp.raise_for_status()
         data = resp.json()
         # Expecting data["data"] list of {"embedding": [...], "index": i}
-        return [item["embedding"] for item in data["data"]] 
+        return [item["embedding"] for item in data["data"]]
