@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { sampleData } from '../data/sampleData';
+import { courseAPI, assignmentAPI } from '../services/api';
 import { CourseCard, AssignmentCard } from '../components/Cards';
 import { AssignmentModal } from '../components/Forms';
 import { AnalyticsChart } from '../components/Chart';
@@ -9,12 +9,46 @@ import { StudentNav } from '../components/Navbar';
 
 const TeacherDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [assignments, setAssignments] = useState([]);
   const navigate = useNavigate();
 
-  const handleCreateAssignment = (formData) => {
-    const course = sampleData.courses.find(c => c.id === Number(formData.courseId));
-    alert(`Assignment "${formData.title}" created for ${course ? course.name : 'course'}`);
-    setShowCreateModal(false);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const coursesRes = await courseAPI.getAll();
+        setCourses(coursesRes.data);
+        
+        // Fetch assignments for each course - might be inefficient for many courses
+        const assignmentsPromises = coursesRes.data.map(c => assignmentAPI.getForCourse(c.course_id));
+        const assignmentsByCourse = await Promise.all(assignmentsPromises);
+        setAssignments(assignmentsByCourse.flatMap(res => res.data));
+
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleCreateAssignment = async (formData) => {
+    try {
+      await assignmentAPI.create({
+        assignment_name: formData.title,
+        assignment_description: formData.description,
+        assignment_due_date: formData.dueDate,
+        assignment_course_id: Number(formData.courseId),
+      });
+      // Re-fetch assignments
+      const assignmentsRes = await assignmentAPI.getForCourse(formData.courseId);
+      const newAssignments = assignments.filter(a => a.assignment_course_id !== Number(formData.courseId)).concat(assignmentsRes.data);
+      setAssignments(newAssignments);
+
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error("Failed to create assignment", error);
+      alert("Failed to create assignment. Check console for details.");
+    }
   };
 
   const handleCourseClick = (courseId) => {
@@ -73,20 +107,20 @@ const TeacherDashboard = () => {
               <Row>
                 <Col md={3}>
                   <div className="text-center">
-                    <h3 className="text-primary">{sampleData.courses.length}</h3>
+                    <h3 className="text-primary">{courses.length}</h3>
                     <p className="text-muted mb-0">Total Courses</p>
                   </div>
                 </Col>
                 <Col md={3}>
                   <div className="text-center">
-                    <h3 className="text-primary">{sampleData.assignments.length}</h3>
+                    <h3 className="text-primary">{assignments.length}</h3>
                     <p className="text-muted mb-0">Total Assignments</p>
                   </div>
                 </Col>
                 <Col md={3}>
                   <div className="text-center">
                     <h3 className="text-primary">
-                      {sampleData.courses.reduce((sum, course) => sum + course.students, 0)}
+                      {courses.reduce((sum, course) => sum + course.students, 0)}
                     </h3>
                     <p className="text-muted mb-0">Total Students</p>
                   </div>
@@ -94,7 +128,7 @@ const TeacherDashboard = () => {
                 <Col md={3}>
                   <div className="text-center">
                     <h3 className="text-primary">
-                      {Math.round(sampleData.courses.reduce((sum, course) => sum + course.completionRate, 0) / sampleData.courses.length)}%
+                      {Math.round(courses.reduce((sum, course) => sum + course.completionRate, 0) / courses.length)}%
                     </h3>
                     <p className="text-muted mb-0">Avg Completion</p>
                   </div>
@@ -114,12 +148,12 @@ const TeacherDashboard = () => {
             </Card.Header>
             <Card.Body>
               <Row>
-                {sampleData.courses.map((course) => (
-                  <Col md={6} key={course.id} className="mb-3">
+                {courses.map((course) => (
+                  <Col md={6} key={course.course_id} className="mb-3">
                     <CourseCard
                       course={course}
                       userRole="teacher"
-                      onClick={() => handleCourseClick(course.id)}
+                      onClick={() => handleCourseClick(course.course_id)}
                     />
                   </Col>
                 ))}
@@ -134,14 +168,14 @@ const TeacherDashboard = () => {
               <h5 className="mb-0">Recent Assignments</h5>
             </Card.Header>
             <Card.Body>
-              {sampleData.assignments.slice(0, 3).map((assignment) => {
-                const course = sampleData.courses.find(c => c.id === assignment.courseId);
+              {assignments.slice(0, 3).map((assignment) => {
+                const course = courses.find(c => c.course_id === assignment.assignment_course_id);
                 return (
                   <AssignmentCard
-                    key={assignment.id}
+                    key={assignment.assignment_id}
                     assignment={assignment}
-                    courseName={course?.name}
-                    onClick={() => handleAssignmentClick(assignment.id)}
+                    courseName={course?.course_name}
+                    onClick={() => handleAssignmentClick(assignment.assignment_id)}
                   />
                 );
               })}
@@ -155,6 +189,7 @@ const TeacherDashboard = () => {
         show={showCreateModal}
         onHide={() => setShowCreateModal(false)}
         onSubmit={handleCreateAssignment}
+        courses={courses}
       />
     </Container>
     </div>

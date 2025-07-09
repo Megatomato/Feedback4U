@@ -276,7 +276,7 @@ function AddTeacherForm() {
     );
 };
 
-const AssignmentModal = ({ show, onHide, onSubmit }) => {
+const AssignmentModal = ({ show, onHide, onSubmit, courses = [] }) => {
   const [form, setForm] = useState({
     courseId: '',
     title: '',
@@ -314,9 +314,9 @@ const AssignmentModal = ({ show, onHide, onSubmit }) => {
               required
             >
               <option value="">Select a course</option>
-              {sampleData.courses.map(course => (
-                <option key={course.id} value={course.id}>
-                  {course.name}
+              {courses.map(course => (
+                <option key={course.course_id} value={course.course_id}>
+                  {course.course_name}
                 </option>
               ))}
             </Form.Select>

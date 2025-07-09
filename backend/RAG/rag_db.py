@@ -4,8 +4,11 @@ import fitz  # PyMuPDF
 from dotenv import load_dotenv
 from typing import List
 from sqlalchemy import (
-    create_engine, Column, BigInteger, Integer, Text, MetaData, select, insert
+    create_engine, Column, BigInteger, Integer, Text, MetaData, select, insert,
+    DECIMAL, DateTime, ForeignKey, UniqueConstraint, String
 )
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import ProgrammingError
 import pgvector.sqlalchemy
@@ -67,6 +70,155 @@ class Feedback(Base):
     assignment_id = Column(Text, nullable=False)
     course_id     = Column(Text, nullable=False)
     data          = Column(Text, nullable=False)
+
+
+# New Statistics Schema Models
+class StudentStatistic(Base):
+    __tablename__ = "student_statistics"
+    student_id = Column(Integer, primary_key=True)
+    total_submissions = Column(Integer, default=0)
+    average_grade_overall = Column(DECIMAL(5, 2))
+    last_updated = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+
+class SubjectGrade(Base):
+    __tablename__ = "subject_grades"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("student_statistics.student_id", ondelete="CASCADE"))
+    course_name = Column(String(255), nullable=False)
+    grade = Column(DECIMAL(5, 2))
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    __table_args__ = (UniqueConstraint('student_id', 'course_name', name='_student_course_uc'),)
+
+class SubjectFeedback(Base):
+    __tablename__ = "subject_feedback"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("student_statistics.student_id", ondelete="CASCADE"))
+    course_name = Column(String(255), nullable=False)
+    last_feedback = Column(Text)
+    last_feedback_date = Column(DateTime(timezone=True))
+    __table_args__ = (UniqueConstraint('student_id', 'course_name', name='_student_course_feedback_uc'),)
+
+class TeacherAnalytic(Base):
+    __tablename__ = "teacher_analytics"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    teacher_id = Column(Integer, nullable=False)
+    course_name = Column(String(255), nullable=False)
+    worst_marked_criteria = Column(JSONB)
+    student_grade_distribution = Column(JSONB)
+    last_updated = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    __table_args__ = (UniqueConstraint('teacher_id', 'course_name', name='_teacher_course_uc'),)
+
+
+def get_db_session():
+    engine = create_engine(DB_URL)
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    return Session()
+
+def update_student_submission_stats(student_id: int, course_name: str, grade: float):
+    session = get_db_session()
+    try:
+        # Check if student exists, if not create one
+        student_stat = session.query(StudentStatistic).filter_by(student_id=student_id).first()
+        if not student_stat:
+            student_stat = StudentStatistic(student_id=student_id, total_submissions=0)
+            session.add(student_stat)
+            session.flush() # to get the id
+
+        # Increment submissions
+        student_stat.total_submissions += 1
+
+        # Update subject grade
+        subject_grade = session.query(SubjectGrade).filter_by(student_id=student_id, course_name=course_name).first()
+        if not subject_grade:
+            subject_grade = SubjectGrade(student_id=student_id, course_name=course_name)
+            session.add(subject_grade)
+        subject_grade.grade = grade
+
+        session.commit()
+
+        # Recalculate average grade
+        grades = session.query(SubjectGrade.grade).filter_by(student_id=student_id).all()
+        if grades:
+            average = sum(g[0] for g in grades) / len(grades)
+            student_stat.average_grade_overall = average
+        
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logging.error(f"Error updating student stats: {e}")
+        raise
+    finally:
+        session.close()
+
+
+def update_subject_feedback(student_id: int, course_name: str, feedback: str):
+    session = get_db_session()
+    try:
+        feedback_record = session.query(SubjectFeedback).filter_by(student_id=student_id, course_name=course_name).first()
+        if not feedback_record:
+            # Also ensure the student exists in student_statistics
+            student_stat = session.query(StudentStatistic).filter_by(student_id=student_id).first()
+            if not student_stat:
+                student_stat = StudentStatistic(student_id=student_id)
+                session.add(student_stat)
+            
+            feedback_record = SubjectFeedback(student_id=student_id, course_name=course_name)
+            session.add(feedback_record)
+        
+        feedback_record.last_feedback = feedback
+        feedback_record.last_feedback_date = func.now()
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logging.error(f"Error updating subject feedback: {e}")
+        raise
+    finally:
+        session.close()
+
+def update_teacher_analytics(teacher_id: int, course_name: str, worst_criteria: dict, grade_distribution: dict):
+    session = get_db_session()
+    try:
+        analytic_record = session.query(TeacherAnalytic).filter_by(teacher_id=teacher_id, course_name=course_name).first()
+        if not analytic_record:
+            analytic_record = TeacherAnalytic(teacher_id=teacher_id, course_name=course_name)
+            session.add(analytic_record)
+        
+        analytic_record.worst_marked_criteria = worst_criteria
+        analytic_record.student_grade_distribution = grade_distribution
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logging.error(f"Error updating teacher analytics: {e}")
+        raise
+    finally:
+        session.close()
+
+def get_student_statistics(student_id: int):
+    session = get_db_session()
+    try:
+        stats = session.query(StudentStatistic).filter_by(student_id=student_id).first()
+        if not stats:
+            return None
+        
+        grades = session.query(SubjectGrade).filter_by(student_id=student_id).all()
+        feedback = session.query(SubjectFeedback).filter_by(student_id=student_id).all()
+        
+        return {
+            "statistics": stats,
+            "grades": grades,
+            "feedback": feedback
+        }
+    finally:
+        session.close()
+
+def get_teacher_analytics(teacher_id: int):
+    session = get_db_session()
+    try:
+        analytics = session.query(TeacherAnalytic).filter_by(teacher_id=teacher_id).all()
+        return analytics
+    finally:
+        session.close()
 
 
 class EmbeddingModel:
