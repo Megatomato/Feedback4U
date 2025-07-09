@@ -14,10 +14,25 @@
       devShells.default = pkgs.mkShell {
         packages = [
             pkgs.nodejs_24
-            pkgs.python313Packages.openai
             pkgs.python313Packages.sqlalchemy
-            pkgs.python313Packages.pgvector
             pkgs.python313Packages.psycopg2-binary
+            pkgs.python313Packages.fastapi
+            pkgs.python313Packages.uvicorn
+            pkgs.python313Packages.python-multipart
+            pkgs.python313Packages.pydantic
+            pkgs.python313Packages.python-jose
+            pkgs.python313Packages.passlib
+            pkgs.python313Packages.email-validator
+            pkgs.python313Packages.langchain
+            pkgs.python313Packages.langchain-community
+            pkgs.python313Packages.langchain-openai
+            pkgs.python313Packages.langchain-huggingface
+            pkgs.python313Packages.openai
+            pkgs.python313Packages.requests
+            pkgs.python313Packages.pymupdf
+            pkgs.python313Packages.pypdf
+            pkgs.python313Packages.pgvector
+            pkgs.python313Packages.google-generativeai
         ];
       };
     });

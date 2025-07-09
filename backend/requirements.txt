@@ -7,28 +7,8 @@ pydantic>=2.0
 # --- Authentication ---
 python-jose[cryptography]>=3.3
 passlib[bcrypt]>=1.7
-email-validator>=2.0 
-
-# --- LangChain ecosystem ---
-langchain 
-langchain-community 
-langchain-openai 
-langchain-huggingface 
-langchain-experimental 
-
-# --- LLM / embedding providers ---
-openai>=1.0
-google-generativeai 
-requests 
+email-validator>=2.0
 
 # --- Database / vector search ---
 sqlalchemy>=2.0
-pgvector>=0.2
 psycopg2-binary>=2.9
-
-# --- PDF handling ---
-PyMuPDF 
-pypdf 
-
-# --- Utilities ---
-python-dotenv

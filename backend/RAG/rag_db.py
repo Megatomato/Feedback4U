@@ -3,16 +3,27 @@ import logging
 import fitz  # PyMuPDF
 from dotenv import load_dotenv
 from typing import List
-from sqlalchemy import (
-    create_engine, Column, BigInteger, Integer, Text, MetaData, select, insert,
-    DECIMAL, DateTime, ForeignKey, UniqueConstraint, String
-)
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import ProgrammingError
 import pgvector.sqlalchemy
-from preprocessing.preprocessing2 import run as semantic_chunker
+from sqlalchemy import (
+    create_engine,
+    Column,
+    BigInteger,
+    Integer,
+    Text,
+    MetaData,
+    select,
+    insert,
+    DECIMAL,
+    DateTime,
+    ForeignKey,
+    UniqueConstraint,
+    String,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import func
+import pgvector.sqlalchemy
 from preprocessing.preprocessing import run as recursive_chunker
 from sqlalchemy import text as sqltext
 
@@ -34,42 +45,44 @@ if "HuggingFaceEmbeddings" not in globals():
 # ---------------------------------------------------------------------
 load_dotenv()
 
-DB_URL          = os.getenv("DATABASE_URL")
-OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY")
-DEEPSEEK_API_KEY= os.getenv("DEEPSEEK_API_KEY")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 GITEE_API_KEY = os.getenv("GITEE_API_KEY")
-
 
 
 Base = declarative_base(metadata=MetaData())
 
+
 class AssignmentChunk(Base):
     __tablename__ = "assignment_chunks"
-    id            = Column(BigInteger, primary_key=True)
-    student_id    = Column(Text,  nullable=False)
-    assignment_id = Column(Text,  nullable=False)
-    course_id     = Column(Text,  nullable=False)
-    chunk_no      = Column(Integer, nullable=False)
-    content       = Column(Text, nullable=False)
-    embedding     = Column(pgvector.sqlalchemy.Vector(), nullable=False)   # no argument
+    id = Column(BigInteger, primary_key=True)
+    student_id = Column(Text, nullable=False)
+    assignment_id = Column(Text, nullable=False)
+    course_id = Column(Text, nullable=False)
+    chunk_no = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    embedding = Column(pgvector.sqlalchemy.Vector(), nullable=False)  # no argument
+
 
 class ReferenceChunk(Base):
     __tablename__ = "reference_chunks"
-    id            = Column(BigInteger, primary_key=True)
-    course_id     = Column(Text,  nullable=False)
-    doc_type      = Column(Text,  nullable=False)
-    heading_path  = Column(Text)
-    content       = Column(Text, nullable=False)
-    embedding     = Column(pgvector.sqlalchemy.Vector(), nullable=False)
+    id = Column(BigInteger, primary_key=True)
+    course_id = Column(Text, nullable=False)
+    doc_type = Column(Text, nullable=False)
+    heading_path = Column(Text)
+    content = Column(Text, nullable=False)
+    embedding = Column(pgvector.sqlalchemy.Vector(), nullable=False)
+
 
 class Feedback(Base):
     __tablename__ = "feedback"
-    id            = Column(BigInteger, primary_key=True)
-    student_id    = Column(Text, nullable=False)
+    id = Column(BigInteger, primary_key=True)
+    student_id = Column(Text, nullable=False)
     assignment_id = Column(Text, nullable=False)
-    course_id     = Column(Text, nullable=False)
-    data          = Column(Text, nullable=False)
+    course_id = Column(Text, nullable=False)
+    data = Column(Text, nullable=False)
 
 
 # New Statistics Schema Models
@@ -80,6 +93,7 @@ class StudentStatistic(Base):
     average_grade_overall = Column(DECIMAL(5, 2))
     last_updated = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
+
 class SubjectGrade(Base):
     __tablename__ = "subject_grades"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -87,7 +101,8 @@ class SubjectGrade(Base):
     course_name = Column(String(255), nullable=False)
     grade = Column(DECIMAL(5, 2))
     updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
-    __table_args__ = (UniqueConstraint('student_id', 'course_name', name='_student_course_uc'),)
+    __table_args__ = (UniqueConstraint("student_id", "course_name", name="_student_course_uc"),)
+
 
 class SubjectFeedback(Base):
     __tablename__ = "subject_feedback"
@@ -96,7 +111,10 @@ class SubjectFeedback(Base):
     course_name = Column(String(255), nullable=False)
     last_feedback = Column(Text)
     last_feedback_date = Column(DateTime(timezone=True))
-    __table_args__ = (UniqueConstraint('student_id', 'course_name', name='_student_course_feedback_uc'),)
+    __table_args__ = (
+        UniqueConstraint("student_id", "course_name", name="_student_course_feedback_uc"),
+    )
+
 
 class TeacherAnalytic(Base):
     __tablename__ = "teacher_analytics"
@@ -106,7 +124,7 @@ class TeacherAnalytic(Base):
     worst_marked_criteria = Column(JSONB)
     student_grade_distribution = Column(JSONB)
     last_updated = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
-    __table_args__ = (UniqueConstraint('teacher_id', 'course_name', name='_teacher_course_uc'),)
+    __table_args__ = (UniqueConstraint("teacher_id", "course_name", name="_teacher_course_uc"),)
 
 
 def get_db_session():
@@ -114,6 +132,7 @@ def get_db_session():
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     return Session()
+
 
 def update_student_submission_stats(student_id: int, course_name: str, grade: float):
     session = get_db_session()
@@ -123,13 +142,17 @@ def update_student_submission_stats(student_id: int, course_name: str, grade: fl
         if not student_stat:
             student_stat = StudentStatistic(student_id=student_id, total_submissions=0)
             session.add(student_stat)
-            session.flush() # to get the id
+            session.flush()  # to get the id
 
         # Increment submissions
         student_stat.total_submissions += 1
 
         # Update subject grade
-        subject_grade = session.query(SubjectGrade).filter_by(student_id=student_id, course_name=course_name).first()
+        subject_grade = (
+            session.query(SubjectGrade)
+            .filter_by(student_id=student_id, course_name=course_name)
+            .first()
+        )
         if not subject_grade:
             subject_grade = SubjectGrade(student_id=student_id, course_name=course_name)
             session.add(subject_grade)
@@ -142,7 +165,7 @@ def update_student_submission_stats(student_id: int, course_name: str, grade: fl
         if grades:
             average = sum(g[0] for g in grades) / len(grades)
             student_stat.average_grade_overall = average
-        
+
         session.commit()
     except Exception as e:
         session.rollback()
@@ -155,17 +178,21 @@ def update_student_submission_stats(student_id: int, course_name: str, grade: fl
 def update_subject_feedback(student_id: int, course_name: str, feedback: str):
     session = get_db_session()
     try:
-        feedback_record = session.query(SubjectFeedback).filter_by(student_id=student_id, course_name=course_name).first()
+        feedback_record = (
+            session.query(SubjectFeedback)
+            .filter_by(student_id=student_id, course_name=course_name)
+            .first()
+        )
         if not feedback_record:
             # Also ensure the student exists in student_statistics
             student_stat = session.query(StudentStatistic).filter_by(student_id=student_id).first()
             if not student_stat:
                 student_stat = StudentStatistic(student_id=student_id)
                 session.add(student_stat)
-            
+
             feedback_record = SubjectFeedback(student_id=student_id, course_name=course_name)
             session.add(feedback_record)
-        
+
         feedback_record.last_feedback = feedback
         feedback_record.last_feedback_date = func.now()
         session.commit()
@@ -176,14 +203,21 @@ def update_subject_feedback(student_id: int, course_name: str, feedback: str):
     finally:
         session.close()
 
-def update_teacher_analytics(teacher_id: int, course_name: str, worst_criteria: dict, grade_distribution: dict):
+
+def update_teacher_analytics(
+    teacher_id: int, course_name: str, worst_criteria: dict, grade_distribution: dict
+):
     session = get_db_session()
     try:
-        analytic_record = session.query(TeacherAnalytic).filter_by(teacher_id=teacher_id, course_name=course_name).first()
+        analytic_record = (
+            session.query(TeacherAnalytic)
+            .filter_by(teacher_id=teacher_id, course_name=course_name)
+            .first()
+        )
         if not analytic_record:
             analytic_record = TeacherAnalytic(teacher_id=teacher_id, course_name=course_name)
             session.add(analytic_record)
-        
+
         analytic_record.worst_marked_criteria = worst_criteria
         analytic_record.student_grade_distribution = grade_distribution
         session.commit()
@@ -194,23 +228,21 @@ def update_teacher_analytics(teacher_id: int, course_name: str, worst_criteria: 
     finally:
         session.close()
 
+
 def get_student_statistics(student_id: int):
     session = get_db_session()
     try:
         stats = session.query(StudentStatistic).filter_by(student_id=student_id).first()
         if not stats:
             return None
-        
+
         grades = session.query(SubjectGrade).filter_by(student_id=student_id).all()
         feedback = session.query(SubjectFeedback).filter_by(student_id=student_id).all()
-        
-        return {
-            "statistics": stats,
-            "grades": grades,
-            "feedback": feedback
-        }
+
+        return {"statistics": stats, "grades": grades, "feedback": feedback}
     finally:
         session.close()
+
 
 def get_teacher_analytics(teacher_id: int):
     session = get_db_session()
@@ -228,7 +260,7 @@ class EmbeddingModel:
         provider = provider.lower()
         self.provider = provider
         if provider == "openai":
-            self.model      = OpenAIEmbeddings(api_key=OPENAI_API_KEY, model="text-embedding-3-small")
+            self.model = OpenAIEmbeddings(api_key=OPENAI_API_KEY, model="text-embedding-3-small")
             self.dimensions = 1536
         elif provider == "gemini":
             # self.model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GEMINI_API_KEY)
@@ -253,20 +285,22 @@ class EmbeddingModel:
             return [self.model.embed_query(t) for t in texts]
 
 
-
 def run_chunker(file_path: str, strategy: str) -> List[str]:
     if strategy == "recursive" and recursive_chunker:
         return recursive_chunker(file_path)
     if strategy == "semantic" and semantic_chunker:
         return semantic_chunker(file_path)
 
+
 # ---------------------------------------------------------------------
 # 4. Text extraction util (PDF only for brevity)
 # ---------------------------------------------------------------------
 
+
 def extract_text(file_path: str) -> str:
     with fitz.open(file_path) as doc:
         return "".join(page.get_text() for page in doc)
+
 
 def clean_chunks(chunks: List[str]) -> List[str]:
     """Removes junk chunks and page headers/footers."""
@@ -278,7 +312,7 @@ def clean_chunks(chunks: List[str]) -> List[str]:
         if len(chunk) < 10:
             continue
         # 3. Filter out repetitive headers/footers
-        lines = chunk.split('\n')
+        lines = chunk.split("\n")
         if "general mathematics 2019 v1.2" in lines[0].lower():
             continue
         if "queensland curriculum & assessment authority" in chunk.lower():
@@ -288,9 +322,12 @@ def clean_chunks(chunks: List[str]) -> List[str]:
             continue
         cleaned.append(chunk)
     return cleaned
+
+
 # ---------------------------------------------------------------------
 # 5.  Helper: fetch top‑k with pgvector HNSW via text SQL
 # ---------------------------------------------------------------------
+
 
 def topk_assignment(session, assignment_id: str, query_vec: List[float], k: int = 4):
     stmt = sqltext(
@@ -302,7 +339,9 @@ def topk_assignment(session, assignment_id: str, query_vec: List[float], k: int 
         LIMIT  :limit;
         """
     )
-    rows = session.execute(stmt, {"aid": assignment_id, "qvec": str(query_vec), "limit": k}).fetchall()
+    rows = session.execute(
+        stmt, {"aid": assignment_id, "qvec": str(query_vec), "limit": k}
+    ).fetchall()
     return [r[0] for r in rows]
 
 
@@ -319,10 +358,17 @@ def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4):
     rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}).fetchall()
     return [r[0] for r in rows]
 
-def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: str,
-                        chunker: str, embedder_name: str):
+
+def ingest_file(
+    file_path: str,
+    student_id: str,
+    assignment_id: str,
+    course_id: str,
+    chunker: str,
+    embedder_name: str,
+):
     # -- setup DB session
-    engine  = create_engine(DB_URL)
+    engine = create_engine(DB_URL)
 
     with engine.begin() as conn:
         try:
@@ -340,7 +386,7 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
     else:  # preprocessing scripts might return list[dict]
         chunks = [c["content"] if isinstance(c, dict) else str(c) for c in splitter_texts]
 
-    chunks = [chunk.replace('\x00', '') for chunk in chunks]
+    chunks = [chunk.replace("\x00", "") for chunk in chunks]
 
     # Clean the chunks to remove headers, footers, and junk
     chunks = clean_chunks(chunks)
@@ -350,7 +396,7 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
     # for i, chunk in enumerate(chunks):
     #     logging.info(f"Chunk {i+1}: '{chunk}'")
     # logging.info("---END CHUNKS---")
-    
+
     sanitized_chunks = [chunk for chunk in chunks if chunk and chunk.strip()]
     if not sanitized_chunks:
         logging.warning("No non-empty chunks found after cleaning. Skipping embedding.")
@@ -359,12 +405,14 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
     vectors = embedder.embed(sanitized_chunks)
 
     objects = [
-        AssignmentChunk(student_id=student_id,
-                        assignment_id=assignment_id,
-                        course_id=course_id,
-                        chunk_no=i + 1,
-                        content=txt,
-                        embedding=vec)
+        AssignmentChunk(
+            student_id=student_id,
+            assignment_id=assignment_id,
+            course_id=course_id,
+            chunk_no=i + 1,
+            content=txt,
+            embedding=vec,
+        )
         for i, (txt, vec) in enumerate(zip(sanitized_chunks, vectors))
     ]
 
@@ -375,10 +423,11 @@ def ingest_file(file_path: str, student_id: str, assignment_id: str, course_id: 
     return vectors[0] if vectors else None
 
 
-def ingest_reference_file(file_path: str, course_id: str, doc_type: str,
-                          chunker: str, embedder_name: str):
+def ingest_reference_file(
+    file_path: str, course_id: str, doc_type: str, chunker: str, embedder_name: str
+):
     # -- setup DB session
-    engine  = create_engine(DB_URL)
+    engine = create_engine(DB_URL)
 
     with engine.begin() as conn:
         try:
@@ -396,14 +445,11 @@ def ingest_reference_file(file_path: str, course_id: str, doc_type: str,
     else:  # preprocessing scripts might return list[dict]
         chunks = [c["content"] if isinstance(c, dict) else str(c) for c in splitter_texts]
 
-    chunks = [chunk.replace('\x00', '') for chunk in chunks]
+    chunks = [chunk.replace("\x00", "") for chunk in chunks]
     vectors = embedder.embed(chunks)
 
     objects = [
-        ReferenceChunk(course_id=course_id,
-                       doc_type=doc_type,
-                       content=txt,
-                       embedding=vec)
+        ReferenceChunk(course_id=course_id, doc_type=doc_type, content=txt, embedding=vec)
         for txt, vec in zip(chunks, vectors)
     ]
 
