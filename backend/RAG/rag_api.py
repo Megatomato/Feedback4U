@@ -46,8 +46,6 @@ async def health_check(db: Session = Depends(get_db)):
                 "timestamp": datetime.utcnow().isoformat()
             }
         )
-    finally:
-        db.close()
 
 @app.post("/upload-reference/", summary="Upload a reference document")
 async def upload_reference(
