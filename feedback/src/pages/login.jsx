@@ -38,6 +38,7 @@ const LoginPage = () => {
     setIsLoading(true);
     setError('');
 
+    console.log(form)
     const result = await login(formData.email.trim(), formData.password.trim());
     console.log("Login result:", result);
     if (result.success) {

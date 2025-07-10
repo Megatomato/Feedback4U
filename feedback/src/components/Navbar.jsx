@@ -26,27 +26,16 @@ function LandNav() {
 }
 
 function AdminNav() {
-  const { currentUser, logout } = useAuth();
-  const navigate = useNavigate();
-
-  if (!currentUser) return null;
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
+  const { user } = useAuth();
   return (
     <>
       <Navbar bg="primary" data-bs-theme="dark" fixed="top">
         <Container>
-        <Nav className="me-auto">
           <Image src={logo} rounded height="35px"/>
           <Navbar.Brand href="/admin/dashboard">Feedback4U</Navbar.Brand>
-        </Nav>
-        <Nav>
-          <Logout/>
-        </Nav>
+          <Nav className='ms-auto'>
+            <Logout user={user}/>
+          </Nav>
         </Container>
       </Navbar>
     </>
@@ -54,8 +43,6 @@ function AdminNav() {
 }
 
 function StudentNav() {
-
-  const navigate = useNavigate();
   return (
     <Navbar bg="primary" data-bs-theme="dark" fixed="top">
       <Container>
@@ -85,10 +72,12 @@ function StudentNav() {
 };
 
 function Logout() {
-  const { currentUser, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  if (!currentUser) return null;
+  console.log(user)
+
+  if (!user) return null;
 
   const handleLogout = () => {
     logout();
@@ -99,13 +88,9 @@ function Logout() {
         <NavDropdown menuVariant="light" title={
           <>
             <i className="bi bi-person-circle me-1"></i>
-            {currentUser.name}
+            {user.role}
           </>
         } id="basic-nav-dropdown">
-          <NavDropdown.Item disabled>
-            <small className="text-muted">{currentUser.role} account</small>
-          </NavDropdown.Item>
-          <NavDropdown.Divider />
           <NavDropdown.Item onClick={handleLogout}>
             <i className="bi bi-box-arrow-right me-1"></i>
             Logout

@@ -3,8 +3,9 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Modal from 'react-bootstrap/Modal';
-import { sampleData } from '../data/sampleData';
 
+import { authAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 function AddStudentForm() {
   const [formData, setFormData] = useState({
@@ -39,6 +40,7 @@ function AddStudentForm() {
   };
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
     const form = e.currentTarget;
 
@@ -51,14 +53,18 @@ function AddStudentForm() {
     setIsSubmitting(true);
 
     try {
-      // NOTE: API call would be here
-      await new Promise(resolve => setTimeout(resolve, 1500));
 
       console.log('Form submitted:', formData);
-      setSubmitSuccess(true);
-      setValidated(true);
+      const result = await authAPI.registerStudent(formData);
+
+      if (result.success) {
+        setSubmitSuccess(true);
+        setValidated(true);
+      }
+
     } catch (error) {
       console.error('Signup error:', error);
+      alert('Registration failed: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }

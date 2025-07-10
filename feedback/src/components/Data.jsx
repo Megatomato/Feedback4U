@@ -10,7 +10,7 @@ function ATable(props) {
   return (
     <div>
     <h1> Edit / View Courses </h1>
-    <Table striped hover>
+    <Table striped hover bordered style={{ "--bs-table-striped-bg": "#dfdad9" }}>
       <tbody>
         {props.data.map((row) => (
           <tr

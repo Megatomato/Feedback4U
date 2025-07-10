@@ -43,14 +43,14 @@ const SignupPage = () => {
 
     try {
       console.log('Form submitted:', formData);
-      
+
       // Call the actual registration API
       const result = await registerAdmin(formData);
-      
+
       if (result.success) {
         setSubmitSuccess(true);
         setValidated(true);
-        
+
         // Redirect after successful signup
         setTimeout(() => navigate('/login'), 2000);
       } else {

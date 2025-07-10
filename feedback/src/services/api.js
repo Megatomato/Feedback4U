@@ -46,7 +46,13 @@ export const authAPI = {
   },
 
   registerStudent: (data) => {
-    return api.post('/auth/register/student', data);
+    const payload = {
+      email: data.email,
+      password: data.password,
+      phone_number: data.phoneNumber,
+      school_admin_id: data.id,
+    };
+    return api.post('/auth/register/student', payload);
   },
 
   login: (email, password) => {
