@@ -12,16 +12,24 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    // Initialize from localStorage if available
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialize based on token presence
+    return !!localStorage.getItem('token');
+  });
 
   // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
-      
+
       if (token && storedUser) {
         try {
           // Verify token is still valid
@@ -46,23 +54,27 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.login(email, password);
       const { access_token } = response.data;
-      
+
       // Store token
       localStorage.setItem('token', access_token);
-      
+
       // Get user info
       const userResponse = await authAPI.getCurrentUser();
       const userData = userResponse.data;
-      
+
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       setIsAuthenticated(true);
-      
+
       return { success: true, user: userData };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Login failed' 
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsAuthenticated(false);
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Login failed'
       };
     }
   };
@@ -71,12 +83,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.registerAdmin(formData);
       const userData = response.data;
-      
+
       return { success: true, user: userData };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Registration failed' 
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Registration failed'
       };
     }
   };
@@ -89,7 +101,7 @@ export const AuthProvider = ({ children }) => {
 
   const getUserType = () => {
     if (!user) return null;
-    
+
     // Determine user type based on user object properties
     if (user.admin_id) return 'admin';
     if (user.teacher_id) return 'teacher';
