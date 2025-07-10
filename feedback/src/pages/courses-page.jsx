@@ -7,7 +7,7 @@ import { StudentNav } from '../components/Navbar';
 import { sampleData } from '../data/sampleData';
 
 const CoursesPage = () => {
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleCourseClick = (courseId) => {
@@ -22,7 +22,7 @@ const CoursesPage = () => {
         <Col>
           <h1 className="h3 mb-2">Courses</h1>
           <p className="text-muted">
-            {currentUser.role === 'teacher' ? 'Manage your courses' : 'Your enrolled courses'}
+            {user.role === 'teacher' ? 'Manage your courses' : 'Your enrolled courses'}
           </p>
         </Col>
       </Row>
@@ -32,7 +32,7 @@ const CoursesPage = () => {
           <Col key={course.id} lg={3} md={6} className="mb-4">
             <CourseCard
               course={course}
-              userRole={currentUser.role}
+              userRole={user.role}
               onClick={() => handleCourseClick(course.id)}
             />
           </Col>

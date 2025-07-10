@@ -9,7 +9,7 @@ import { StudentNav } from '../components/Navbar';
 const AssignmentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const [assignment, setAssignment] = useState(null);
   const [course, setCourse] = useState(null);
   const [submission, setSubmission] = useState(null); // This would be fetched from an API
