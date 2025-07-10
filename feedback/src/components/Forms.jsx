@@ -187,6 +187,7 @@ function AddTeacherForm() {
 
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
     const form = e.currentTarget;
 
@@ -199,14 +200,18 @@ function AddTeacherForm() {
     setIsSubmitting(true);
 
     try {
-      // NOTE: API call would be here
-      await new Promise(resolve => setTimeout(resolve, 1500));
 
       console.log('Form submitted:', formData);
-      setSubmitSuccess(true);
-      setValidated(true);
+      const result = await authAPI.registerTeacher(formData);
+
+      if (result.success) {
+        setSubmitSuccess(true);
+        setValidated(true);
+      }
+
     } catch (error) {
       console.error('Signup error:', error);
+      alert('Registration failed: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }

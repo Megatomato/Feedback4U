@@ -8,17 +8,17 @@ import { StudentNav } from '../components/Navbar';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
 
   // Get student's data
-  const student = sampleData.students.find(s => s.id === currentUser.id);
+  const student = sampleData.students.find(s => s.id === user.id);
   const studentCourses = sampleData.courses.filter(course =>
     student?.courses.includes(course.id)
   );
 
   // Get recent submissions
   const recentSubmissions = sampleData.submissions
-    .filter(submission => submission.studentId === currentUser.id)
+    .filter(submission => submission.studentId === user.id)
     .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
     .slice(0, 5);
 

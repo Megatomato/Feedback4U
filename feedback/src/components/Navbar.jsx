@@ -32,7 +32,7 @@ function AdminNav() {
       <Navbar bg="primary" data-bs-theme="dark" fixed="top">
         <Container>
           <Image src={logo} rounded height="35px"/>
-          <Navbar.Brand href="/admin/dashboard">Feedback4U</Navbar.Brand>
+          <Navbar.Brand href="/dashboard">Feedback4U</Navbar.Brand>
           <Nav className='ms-auto'>
             <Logout user={user}/>
           </Nav>

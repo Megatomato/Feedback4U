@@ -48,11 +48,24 @@ export const authAPI = {
   registerStudent: (data) => {
     const payload = {
       email: data.email,
-      password: data.password,
+      name: data.name,
+      password: "meowmeow123!",
       phone_number: data.phoneNumber,
-      school_admin_id: data.id,
+      school_admin_id: 1,
+      school_student_id: data.id,
     };
     return api.post('/auth/register/student', payload);
+  },
+
+  registerTeacher: (data) => {
+    const payload = {
+      email: data.email,
+      name: data.name,
+      password: "meowmeow123!",
+      phone_number: data.phoneNumber,
+      school_admin_id: 1,
+    };
+    return api.post('/auth/register/teacher', payload);
   },
 
   login: (email, password) => {
