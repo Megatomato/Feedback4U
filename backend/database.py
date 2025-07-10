@@ -70,6 +70,7 @@ class Student(Base):
     __tablename__ = "students"
     student_id = Column(Integer, primary_key=True, autoincrement=True)
     school_student_id = Column(Integer, nullable=False)
+    school_admin_id = Column(Integer, ForeignKey("admin.admin_id"), nullable=False)
     student_email = Column(String(255), unique=True, nullable=False)
     student_name = Column(String(255), nullable=False)
     student_phone_number = Column(String(255), nullable=False)
@@ -134,6 +135,7 @@ class UserCreate(BaseModel):
     name: str
     phone_number: str
     school_student_id: int
+    school_admin_id: int
 
 
 class AdminCreate(BaseModel):

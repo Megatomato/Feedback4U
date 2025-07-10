@@ -31,6 +31,7 @@ CREATE TABLE teachers (
 CREATE TABLE students (
     student_id SERIAL PRIMARY KEY,
     school_student_id INTEGER NOT NULL,
+    school_admin_id INTEGER NOT NULL REFERENCES admin(admin_id),
     student_email VARCHAR(255) UNIQUE NOT NULL,
     student_name VARCHAR(255) NOT NULL,
     student_phone_number VARCHAR(255) NOT NULL,
@@ -83,6 +84,7 @@ CREATE TABLE submitted_assignments (
 
 -- Performance indexes
 CREATE INDEX idx_teachers_school_admin ON teachers(school_admin_id);
+CREATE INDEX idx_students_school_admin ON students(school_admin_id);
 CREATE INDEX idx_courses_teacher ON courses(course_teacher_id);
 CREATE INDEX idx_assignments_course ON assignments(assignment_course_id);
 

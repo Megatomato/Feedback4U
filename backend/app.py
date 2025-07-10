@@ -227,6 +227,7 @@ async def register_student(user: UserCreate, db: Session = Depends(get_db)):
 
     db_student = Student(
         school_student_id=user.school_student_id,
+        school_admin_id=user.school_admin_id,
         student_email=user.email,
         student_name=user.name,
         student_phone_number=user.phone_number,
