@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 const CoursePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [assignments, setAssignments] = useState([]);
 
