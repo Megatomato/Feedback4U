@@ -363,17 +363,33 @@ function AddCourseForm() {
     setIsSubmitting(true);
 
     try {
-
       console.log('Form submitted:', formData);
+      
+      // Debug: Check if user is authenticated and what role they have
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('Current user data:', currentUser);
+      console.log('User role:', currentUser.role);
+      console.log('Token:', localStorage.getItem('token'));
+      
+      // Also fetch fresh user data from /me endpoint
+      try {
+        const { authAPI } = await import('../services/api');
+        const freshUserData = await authAPI.getCurrentUser();
+        console.log('Fresh user data from /me:', freshUserData.data);
+      } catch (err) {
+        console.error('Failed to get current user:', err);
+      }
+      
       const result = await courseAPI.create(formData);
 
-        setSubmitSuccess(true);
-        setValidated(true);
-
+      setSubmitSuccess(true);
+      setValidated(true);
 
     } catch (error) {
-      console.error('Signup error:', error);
-      alert('Registration failed: ' + error.message);
+      console.error('Course creation error:', error);
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.detail || error.message || 'Course creation failed';
+      alert('Course creation failed: ' + errorMessage);
     } finally {
       setIsSubmitting(false);
     }

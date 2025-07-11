@@ -371,8 +371,12 @@ async def get_current_user_info(current_user=Depends(get_current_user)):
 def create_course(
     course: CourseCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
+    # Debug logging
+    print(f"User attempting to create course: {type(current_user)} - {getattr(current_user, 'admin_email', getattr(current_user, 'teacher_email', getattr(current_user, 'student_email', 'unknown')))}")
+    print(f"Is Admin: {isinstance(current_user, Admin)}")
+    
     if not isinstance(current_user, Admin):
-        raise HTTPException(status_code=403, detail="Only admins can create courses")
+        raise HTTPException(status_code=403, detail=f"Only admins can create courses. Current user type: {type(current_user).__name__}")
 
     db_course = Course(**course.model_dump(), course_is_active=True)
     db.add(db_course)
