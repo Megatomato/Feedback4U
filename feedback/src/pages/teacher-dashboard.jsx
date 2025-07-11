@@ -18,7 +18,7 @@ const TeacherDashboard = () => {
       try {
         const coursesRes = await courseAPI.getAll();
         setCourses(coursesRes.data);
-        
+
         // Fetch assignments for each course - might be inefficient for many courses
         const assignmentsPromises = coursesRes.data.map(c => assignmentAPI.getForCourse(c.course_id));
         const assignmentsByCourse = await Promise.all(assignmentsPromises);

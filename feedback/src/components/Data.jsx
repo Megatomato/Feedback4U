@@ -14,15 +14,15 @@ function ATable(props) {
       <tbody>
         {props.data.map((row) => (
           <tr
-            key={row.code}
+            key={row.course_name}
             onClick={() => navigate(`/course/${row.id}`)}
             style={{ cursor: 'pointer' }}
           >
-            <td className="col-2">{row.code}</td>
+            <td className="col-2">{row.course_name}</td>
             <td className="col-6">
               <Col>
                 <Row className="justify-content-center">
-                  {row.first}
+                  {row.course_name}
                 </Row>
                 <Row>
                   <Button

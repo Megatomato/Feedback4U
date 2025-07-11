@@ -57,10 +57,8 @@ function AddStudentForm() {
       console.log('Form submitted:', formData);
       const result = await authAPI.registerStudent(formData);
 
-      if (result.success) {
-        setSubmitSuccess(true);
-        setValidated(true);
-      }
+      setSubmitSuccess(true);
+      setValidated(true);
 
     } catch (error) {
       console.error('Signup error:', error);
@@ -204,10 +202,8 @@ function AddTeacherForm() {
       console.log('Form submitted:', formData);
       const result = await authAPI.registerTeacher(formData);
 
-      if (result.success) {
         setSubmitSuccess(true);
         setValidated(true);
-      }
 
     } catch (error) {
       console.error('Signup error:', error);
@@ -222,7 +218,6 @@ function AddTeacherForm() {
      { submitSuccess ? (
        <Alert variant="success" className="text-center">
          <Alert.Heading>Teacher Created Successfully</Alert.Heading>
-         <p>Need to think about how we are dealing with user / password here</p>
          <Button variant="primary" onClick={handleReset}>Add new</Button>
        </Alert>
      ) : (
@@ -336,10 +331,9 @@ function AddCourseForm() {
       console.log('Form submitted:', formData);
       const result = await courseAPI.create(formData);
 
-      if (result.success) {
         setSubmitSuccess(true);
         setValidated(true);
-      }
+
 
     } catch (error) {
       console.error('Signup error:', error);

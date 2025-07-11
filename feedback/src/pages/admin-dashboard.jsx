@@ -1,7 +1,11 @@
-import React, { useState } from "react";
-import Col from "react-bootstrap/Col"
-import Row from "react-bootstrap/Row"
-import Container from "react-bootstrap/Container"
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { CourseCard } from '../components/Cards';
+import { StudentNav } from '../components/Navbar';
+import { courseAPI } from '../services/api';
+
 import Card from "react-bootstrap/Card"
 import Button from "react-bootstrap/Button"
 import ButtonGroup from "react-bootstrap/ButtonGroup"
@@ -13,16 +17,33 @@ import { ATable } from '../components/Data.jsx';
 import { AddTeacherForm, AddStudentForm, AddCourseForm } from '../components/Forms.jsx';
 
 const AdminDashPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    const data = {
-      name: "UQ",
-      courses: [
-        // code and code should swap
-        { id: "1", code: "CSSE6400", first: 'Richard Thomas'},
-        { id: "2", code: "COMP3506", first: 'Richard Thomas'},
-        { id: "3", code: "COMP3400", first: 'Paul Vbrik'},
-      ],
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const coursesRes = await courseAPI.getAll();
+        setCourses(coursesRes.courses);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchCourses();
+  }, []);
+
+  const handleCourseClick = (courseId) => {
+    navigate(`/course/${courseId}`);
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
     return (
     <div>
@@ -33,7 +54,7 @@ const AdminDashPage = () => {
         <Row>
           <Col>
             <Row>
-              <h1> {data.name} Overview </h1>
+              <h1> UQ Overview </h1>
               <h4> Total Courses - 123 </h4>
               <h4> Total Teachers - 123 </h4>
               <h4> Total Students - 123 </h4>
@@ -59,7 +80,7 @@ const AdminDashPage = () => {
             }}>
               <ATable
                 headers={["Course Code", "Teacher", "Students"]}
-                data={data.courses}
+                data={courses}
               />
             </Card>
           </Col>
