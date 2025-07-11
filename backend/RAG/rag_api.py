@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import uvicorn
+import json
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -138,7 +139,7 @@ async def get_feedback(
             )
 
         logging.info("Ingestion complete. Generating feedback...")
-        feedback_json = generate_and_store_feedback(
+        feedback_raw = generate_and_store_feedback(
             student_id=student_id,
             assignment_id=assignment_id,
             course_id=course_id,
@@ -148,7 +149,15 @@ async def get_feedback(
 
         # The feedback is stored as a JSON string in the DB, so we return it as such.
         # For a cleaner API, it might be better to parse and return a JSON object.
-        return JSONResponse(content={"feedback": feedback_json})
+# backend/RAG/rag_api.py
+
+        try:
+            feedback_dict = json.loads(feedback_raw)
+        except json.JSONDecodeError:
+            # fall back if the model produced plain text
+            feedback_dict = {"feedback": feedback_raw, "grades": []}
+
+        return JSONResponse(content=feedback_dict)
 
     except Exception as e:
         logging.error(f"Error getting feedback: {e}")
