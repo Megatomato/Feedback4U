@@ -115,6 +115,8 @@ export const studentAPI = {
 export const teacherAPI = {
   getAll: () => api.get('/teachers'),
   getById: (id) => api.get(`/teachers/${id}`),
+  getCourses: () => api.get('/teacher/courses'),
+  getStatistics: () => api.get('/teacher/statistics'),
 };
 
 // Admin API calls

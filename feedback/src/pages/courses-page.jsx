@@ -17,9 +17,12 @@ const CoursesPage = () => {
     const fetchCourses = async () => {
       try {
         const coursesRes = await courseAPI.getAll();
-        setCourses(coursesRes.courses);
+        console.log('Courses response:', coursesRes);
+        setCourses(coursesRes.data || []);
       } catch (err) {
+        console.error('Error fetching courses:', err);
         setError(err.message);
+        setCourses([]); // Set empty array on error
       } finally {
         setLoading(false);
       }
@@ -49,15 +52,23 @@ const CoursesPage = () => {
         </Row>
 
         <Row>
-          {courses.map(course => (
-            <Col key={course.id} lg={3} md={6} className="mb-4">
-              <CourseCard
-                course={course}
-                userRole={user.role}
-                onClick={() => handleCourseClick(course.id)}
-              />
+          {courses && courses.length > 0 ? (
+            courses.map(course => (
+              <Col key={course.course_id || course.id} lg={3} md={6} className="mb-4">
+                <CourseCard
+                  course={course}
+                  userRole={user.role}
+                  onClick={() => handleCourseClick(course.course_id || course.id)}
+                />
+              </Col>
+            ))
+          ) : (
+            <Col>
+              <div className="text-center text-muted">
+                <p>No courses available.</p>
+              </div>
             </Col>
-          ))}
+          )}
         </Row>
       </Container>
     </div>

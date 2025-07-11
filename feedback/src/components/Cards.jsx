@@ -3,8 +3,15 @@ import { Card, Badge, ProgressBar } from 'react-bootstrap';
 import { formatDate, getDaysUntilDue, getStatusBadge } from '../utils/helpers';
 
 export const CourseCard = ({ course, userRole, onClick }) => {
-  const completionRate = course.completionRate || 75; // Placeholder
-  const students = course.students || 0; // Placeholder
+  // For teacher courses, we now have assignment_count and submission_count from the API
+  const assignmentCount = course.assignment_count || 0;
+  const submissionCount = course.submission_count || 0;
+  
+  // Calculate completion rate based on submissions vs assignments (if assignments exist)
+  const completionRate = assignmentCount > 0 ? Math.round((submissionCount / assignmentCount) * 100) : 0;
+  
+  // For legacy support, keep old fields if they exist
+  const students = course.students || 0; // Still hardcoded for now as requested
 
   return (
     <Card className="h-100 course-card" onClick={onClick} style={{ cursor: 'pointer' }}>
@@ -21,21 +28,23 @@ export const CourseCard = ({ course, userRole, onClick }) => {
           </div>
           <div className="d-flex align-items-center">
             <i className="bi bi-file-text me-1"></i>
-            {/* This will require fetching assignments separately or adjusting the API */}
-            <small> assignments</small>
+            <small>{assignmentCount} assignments</small>
           </div>
         </div>
 
         <div className="mb-3">
           <div className="d-flex justify-content-between">
-            <small className="text-muted">Completion Rate</small>
-            <small className="text-muted">{completionRate}%</small>
+            <small className="text-muted">Submissions</small>
+            <small className="text-muted">{submissionCount} total</small>
           </div>
-          <ProgressBar
-            now={completionRate}
-            variant={completionRate >= 80 ? 'success' : completionRate >= 60 ? 'warning' : 'danger'}
-            size="sm"
-          />
+          <div className="d-flex justify-content-between">
+            <small className="text-muted">Status</small>
+            <small className="text-muted">
+              <Badge bg={course.course_is_active ? 'success' : 'secondary'}>
+                {course.course_is_active ? 'Active' : 'Inactive'}
+              </Badge>
+            </small>
+          </div>
         </div>
       </Card.Body>
 
