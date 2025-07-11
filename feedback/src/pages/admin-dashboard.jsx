@@ -1,45 +1,26 @@
-import React, { useState }from "react";
+import React, { useState } from "react";
 import Col from "react-bootstrap/Col"
 import Row from "react-bootstrap/Row"
 import Container from "react-bootstrap/Container"
 import Card from "react-bootstrap/Card"
 import Button from "react-bootstrap/Button"
-import ButtonToolbar from "react-bootstrap/ButtonToolbar"
+import ButtonGroup from "react-bootstrap/ButtonGroup"
 import Modal from "react-bootstrap/Modal"
 
 import { AdminNav }  from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { ATable } from '../components/Data.jsx';
-import { AddTeacherForm, AddStudentForm } from '../components/Forms.jsx';
+import { AddTeacherForm, AddStudentForm, AddCourseForm } from '../components/Forms.jsx';
 
 const AdminDashPage = () => {
 
     const data = {
       name: "UQ",
       courses: [
-        // code and id should swap
-        { code: "1", id: "CSSE6400", first: 'Richard Thomas'},
-        { id: "COMP3506", first: 'Richard Thomas'},
-        { id: "COMP3400", first: 'Paul Vbrik'},
-        { id: "COMP3400", first: 'Paul Vbrik'},
-        { id: "CSSE3200", first: 'Guowei Yang'},
-        { id: "CSSE3100", first: 'Guowei Yang'},
-        { id: "CSSE3100", first: 'Guowei Yang'},
-        { id: "COMS3200", first: 'Dan Kim'},
-        { id: "CSSE1001", first: 'Jane Smith'},
-        { id: "CSSE3200", first: 'Bob Johnson'},
-        { id: "COMS3200", first: 'Dan Kim'},
-        { id: "CSSE1001", first: 'Jane Smith'},
-        { id: "CSSE3200", first: 'Bob Johnson'},
-        { id: "CSSE3200", first: 'Guowei Yang'},
-        { id: "CSSE3100", first: 'Guowei Yang'},
-        { id: "CSSE3100", first: 'Guowei Yang'},
-        { id: "COMS3200", first: 'Dan Kim'},
-        { id: "CSSE1001", first: 'Jane Smith'},
-        { id: "CSSE3200", first: 'Bob Johnson'},
-        { id: "COMS3200", first: 'Dan Kim'},
-        { id: "CSSE1001", first: 'Jane Smith'},
-        { id: "CSSE3200", first: 'Bob Johnson'},
+        // code and code should swap
+        { id: "1", code: "CSSE6400", first: 'Richard Thomas'},
+        { id: "2", code: "COMP3506", first: 'Richard Thomas'},
+        { id: "3", code: "COMP3400", first: 'Paul Vbrik'},
       ],
     };
 
@@ -64,21 +45,23 @@ const AdminDashPage = () => {
               paddingBottom: "50px",
             }}>
               <Col>
-                <AddXButton form={<AddStudentForm/>} title={"Student"} txt={"Add / Remove or change information about students"}/>
-              </Col>
-              <Col>
-                <AddXButton form={<AddTeacherForm/>} title={"Teacher"} txt={"Add / Remove or change information about teachers"}/>
+                <ManagementButtons
+                  studentForm={<AddStudentForm/>}
+                  teacherForm={<AddTeacherForm/>}
+                  courseForm={<AddCourseForm/>}
+                />
               </Col>
             </Row>
-            <div style={{
-              maxHeight: "650px",
-              overflowY: "auto"
+            <Card style={{
+              maxHeight: "750px",
+              overflowY: "auto",
+              padding: "10px"
             }}>
               <ATable
                 headers={["Course Code", "Teacher", "Students"]}
                 data={data.courses}
               />
-            </div>
+            </Card>
           </Col>
         </Row>
         </Container>
@@ -86,59 +69,126 @@ const AdminDashPage = () => {
     );
 };
 
-function AddXButton(props) {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+function ManagementButtons({ studentForm, teacherForm, courseForm }) {
+  const [activeModal, setActiveModal] = useState(null);
 
-  const handleCloseAdd = () => setShowAddModal(false);
-  const handleShowAdd = () => setShowAddModal(true);
-
-  const handleCloseEdit = () => setShowEditModal(false);
-  const handleShowEdit = () => setShowEditModal(true);
+  const handleClose = () => setActiveModal(null);
+  const handleShow = (modalType) => setActiveModal(modalType);
 
   return (
-    <Container className="text-center align-middle mx-auto" fluid>
+    <Container className="text-center align-mcodedle mx-auto" flucode>
       <Card>
         <Card.Body>
           <Card.Title>
-            {props.txt}
+            Management Tools
           </Card.Title>
           <Card.Text>
-            <ButtonToolbar>
-              <Button onClick={handleShowAdd} className="mx-auto">
-                Add {props.title}s
+            <ButtonGroup vertical className="w-100">
+              <Button onClick={() => handleShow('addStudent')} className="mb-2">
+                Add Students
               </Button>
-              <Button variant="outline-primary" onClick={handleShowEdit} className="mt-2 mx-auto">
-                Edit {props.title} Information
+              <Button variant="outline-primary" onClick={() => handleShow('editStudent')} className="mb-2">
+                Edit Student Information
               </Button>
-            </ButtonToolbar>
+              <Button onClick={() => handleShow('addTeacher')} className="mb-2">
+                Add Teachers
+              </Button>
+              <Button variant="outline-primary" onClick={() => handleShow('editTeacher')} className="mb-2">
+                Edit Teacher Information
+              </Button>
+              <Button onClick={() => handleShow('addCourse')} className="mb-2">
+                Add Courses
+              </Button>
+              <Button variant="outline-primary" onClick={() => handleShow('editCourse')} className="mb-2">
+                Edit Course Information
+              </Button>
+            </ButtonGroup>
           </Card.Text>
         </Card.Body>
       </Card>
 
-      <Modal show={showAddModal} onHide={handleCloseAdd}>
+      {/* Student Modals */}
+      <Modal show={activeModal === 'addStudent'} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Add {props.title}s</Modal.Title>
+          <Modal.Title>Add Students</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {props.form}
+          {studentForm}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseAdd}>
+          <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <Modal show={showEditModal} onHide={handleCloseEdit}>
+      <Modal show={activeModal === 'editStudent'} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit {props.title} Information</Modal.Title>
+          <Modal.Title>Edit Student Information</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {props.form}
+          {studentForm}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseEdit}>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Teacher Modals */}
+      <Modal show={activeModal === 'addTeacher'} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Teachers</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {teacherForm}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={activeModal === 'editTeacher'} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Teacher Information</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {teacherForm}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Course Modals */}
+      <Modal show={activeModal === 'addCourse'} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Courses</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {courseForm}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={activeModal === 'editCourse'} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Course Information</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {courseForm}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
         </Modal.Footer>

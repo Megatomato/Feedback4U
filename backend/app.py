@@ -317,8 +317,8 @@ async def get_current_user_info(current_user=Depends(get_current_user)):
 def create_course(
     course: CourseCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
-    if not isinstance(current_user, Teacher):
-        raise HTTPException(status_code=403, detail="Only teachers can create courses")
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can create courses")
 
     db_course = Course(**course.model_dump(), course_is_active=True)
     db.add(db_course)
