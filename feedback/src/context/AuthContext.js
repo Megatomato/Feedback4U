@@ -101,11 +101,8 @@ export const AuthProvider = ({ children }) => {
   const getUserType = () => {
     if (!user) return null;
 
-    // Determine user type based on user object properties
-    if (user.admin_id) return 'admin';
-    if (user.teacher_id) return 'teacher';
-    if (user.student_id) return 'student';
-    return null;
+    // Use the role field from the normalized user response
+    return user.role || null;
   };
 
   const value = {

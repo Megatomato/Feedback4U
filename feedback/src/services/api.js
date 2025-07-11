@@ -34,36 +34,48 @@ api.interceptors.response.use(
 // Authentication API calls
 export const authAPI = {
   registerAdmin: (data) => {
+    // Extract admin name from email if not provided
+    const emailUsername = data.email.split('@')[0];
+    const adminName = data.adminName || `${emailUsername} (Admin)`;
+    
     const payload = {
       school_name: data.schoolName,
       email: data.email,
       password: data.password,
-      admin_name: 'Admin User', // Default admin name since form doesn't collect this
-      admin_phone_number: '000-000-0000', // Default phone since form doesn't collect this
+      admin_name: adminName,
+      admin_phone_number: data.adminPhone || 'Not provided', // Use provided phone or placeholder
       plan: data.plan
     };
     return api.post('/auth/register/admin', payload);
   },
 
   registerStudent: (data) => {
+    // Get current user from localStorage to get school_admin_id
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const schoolAdminId = currentUser.role === 'admin' ? currentUser.id : currentUser.school_admin_id;
+    
     const payload = {
       email: data.email,
       name: data.name,
-      password: "meowmeow123!",
+      password: data.password, // Password should be provided or will be auto-generated
       phone_number: data.phoneNumber,
-      school_admin_id: 1,
+      school_admin_id: schoolAdminId,
       school_student_id: data.id,
     };
     return api.post('/auth/register/student', payload);
   },
 
   registerTeacher: (data) => {
+    // Get current user from localStorage to get school_admin_id
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const schoolAdminId = currentUser.role === 'admin' ? currentUser.id : currentUser.school_admin_id;
+    
     const payload = {
       email: data.email,
       name: data.name,
-      password: "meowmeow123!",
+      password: data.password, // Password should be provided or will be auto-generated
       phone_number: data.phoneNumber,
-      school_admin_id: 1,
+      school_admin_id: schoolAdminId,
     };
     return api.post('/auth/register/teacher', payload);
   },
