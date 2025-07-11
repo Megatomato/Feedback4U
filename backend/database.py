@@ -142,7 +142,7 @@ class TeacherCreateResponse(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: Optional[str] = None  # Make password optional for auto-generation
     name: str
     phone_number: str
     school_student_id: int
@@ -266,6 +266,16 @@ class SubmissionResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class StudentCreateResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    generated_password: str  # Include the generated password in response
+    
+    class Config:
+        from_attributes = True
 
 
 # Dependency to get database session

@@ -16,29 +16,12 @@ from passwordgenerator import pwgenerator
 
 # Import database models and schemas
 from database import (
-    Admin,
-    Teacher,
-    Student,
-    Course,
-    Assignment,
-    SubmittedAssignment,
-    UserCreate,
-    TeacherCreate,
-    TeacherCreateResponse,
-    AdminCreate,
-    UserResponse,
-    UserMeResponse,
-    AdminResponse,
-    StudentResponse,
-    TeacherResponse,
-    CourseCreate,
-    CourseResponse,
-    AssignmentCreate,
-    AssignmentResponse,
-    SubmissionResponse,
-    Token,
-    get_db,
-    create_cross_table_email_uniqueness_triggers,
+    get_db, Admin, Teacher, Student, Course, Assignment, SubmittedAssignment,
+    AdminCreate, AdminResponse, TeacherCreate, TeacherCreateResponse, 
+    UserCreate, UserResponse, StudentCreateResponse, UserMeResponse,
+    StudentResponse, TeacherResponse, CourseCreate, CourseResponse, 
+    AssignmentCreate, AssignmentResponse, SubmissionResponse, Token,
+    create_cross_table_email_uniqueness_triggers
 )
 
 # Security setup
@@ -255,11 +238,14 @@ async def register_teacher(user: TeacherCreate, db: Session = Depends(get_db)):
     )
 
 
-@app.post("/auth/register/student", response_model=UserResponse)
+@app.post("/auth/register/student", response_model=StudentCreateResponse)
 async def register_student(user: UserCreate, db: Session = Depends(get_db)):
     # Check if email already exists across all user tables
     if check_email_exists_across_all_tables(user.email, db):
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Generate a secure random password if not provided
+    password = user.password if user.password else pwgenerator.generate()
 
     db_student = Student(
         school_student_id=user.school_student_id,
@@ -267,7 +253,7 @@ async def register_student(user: UserCreate, db: Session = Depends(get_db)):
         student_email=user.email,
         student_name=user.name,
         student_phone_number=user.phone_number,
-        student_password_hash=get_password_hash(user.password),
+        student_password_hash=get_password_hash(password),
         student_average_grade=0,
         student_is_studying=True,
     )
@@ -275,8 +261,11 @@ async def register_student(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_student)
 
-    return UserResponse(
-        id=db_student.student_id, email=db_student.student_email, name=db_student.student_name
+    return StudentCreateResponse(
+        id=db_student.student_id, 
+        email=db_student.student_email, 
+        name=db_student.student_name,
+        generated_password=password
     )
 
 

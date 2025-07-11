@@ -18,6 +18,7 @@ function AddStudentForm() {
   const [validated, setValidated] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [studentData, setStudentData] = useState(null); // Store created student data
 
   const handleReset = () => {
     setFormData({
@@ -29,6 +30,7 @@ function AddStudentForm() {
     setValidated(false);
     setSubmitSuccess(false);
     setIsSubmitting(false);
+    setStudentData(null);
   };
 
   const handleChange = (e) => {
@@ -53,18 +55,19 @@ function AddStudentForm() {
     setIsSubmitting(true);
 
     try {
-
       console.log('Form submitted:', formData);
       const result = await authAPI.registerStudent(formData);
 
-      if (result.success) {
+      if (result.data) {
+        setStudentData(result.data); // Store the response data including password
         setSubmitSuccess(true);
         setValidated(true);
       }
 
     } catch (error) {
       console.error('Signup error:', error);
-      alert('Registration failed: ' + error.message);
+      const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
+      alert('Registration failed: ' + errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,8 +78,22 @@ function AddStudentForm() {
      { submitSuccess ? (
        <Alert variant="success" className="text-center">
          <Alert.Heading>Student Created Successfully</Alert.Heading>
-         <p>Need to think about how we are dealing with user / password here</p>
-         <Button variant="primary" onClick={handleReset}>Add new</Button>
+         <div className="mb-3">
+           <p><strong>Name:</strong> {studentData.name}</p>
+           <p><strong>Email:</strong> {studentData.email}</p>
+           <p><strong>Temporary Password:</strong> 
+             <code className="ms-2 p-2 bg-light text-danger">
+               {studentData.generated_password}
+             </code>
+           </p>
+         </div>
+         <Alert variant="warning" className="mb-3">
+           <small>
+             <strong>Important:</strong> Please share this temporary password with the student securely. 
+             They should change it after their first login.
+           </small>
+         </Alert>
+         <Button variant="primary" onClick={handleReset}>Add Another Student</Button>
        </Alert>
      ) : (
        <>
@@ -113,7 +130,7 @@ function AddStudentForm() {
              <Form.Label>Phone Number</Form.Label>
              <Form.Control
                required
-               type="phoneNumber"
+               type="tel"
                placeholder="0433823736"
                name="phoneNumber"
                value={formData.phoneNumber}
@@ -144,7 +161,7 @@ function AddStudentForm() {
                size="lg"
                disabled={isSubmitting}
              >
-               {isSubmitting ? 'Adding Student...' : 'Add Student'}
+               {isSubmitting ? 'Creating Student...' : 'Create Student with Auto-Generated Password'}
              </Button>
            </div>
          </Form>
