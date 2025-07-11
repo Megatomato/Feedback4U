@@ -27,8 +27,11 @@ const AdminDashPage = () => {
     const fetchCourses = async () => {
       try {
         const coursesRes = await courseAPI.getAll();
-        setCourses(coursesRes.courses);
+        console.log('Courses response:', coursesRes); // Debug log
+        // The API returns the courses array directly in coursesRes.data
+        setCourses(coursesRes.data || []);
       } catch (err) {
+        console.error('Error fetching courses:', err);
         setError(err.message);
       } finally {
         setLoading(false);

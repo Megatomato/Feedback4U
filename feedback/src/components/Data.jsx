@@ -7,6 +7,16 @@ import { useNavigate } from 'react-router-dom';
 function ATable(props) {
   const navigate = useNavigate();
 
+  // Safety check for data
+  if (!props.data || !Array.isArray(props.data)) {
+    return (
+      <div>
+        <h1> Edit / View Courses </h1>
+        <p>No courses available or loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div>
     <h1> Edit / View Courses </h1>
@@ -15,14 +25,14 @@ function ATable(props) {
         {props.data.map((row) => (
           <tr
             key={row.course_name}
-            onClick={() => navigate(`/course/${row.id}`)}
+            onClick={() => navigate(`/course/${row.course_id}`)}
             style={{ cursor: 'pointer' }}
           >
             <td className="col-2">{row.course_name}</td>
             <td className="col-6">
               <Col>
                 <Row className="justify-content-center">
-                  {row.course_name}
+                  <strong>{row.course_description}</strong>
                 </Row>
                 <Row>
                   <Button
@@ -30,7 +40,7 @@ function ATable(props) {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log("Change teacher clicked")
+                      console.log("Change teacher clicked for course:", row.course_id)
                     }}
                   >
                     Change Assigned Teacher
@@ -47,7 +57,7 @@ function ATable(props) {
                 variant="outline-secondary"
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log("Edit clicked");
+                  console.log("Edit students clicked for course:", row.course_id);
                 }}
                 className="mx-auto"  // Centers button horizontally
                 style={{ display: "block" }}  // Makes mx-auto work
