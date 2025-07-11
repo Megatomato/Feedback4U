@@ -4,7 +4,7 @@ import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Modal from 'react-bootstrap/Modal';
 
-import { authAPI } from '../services/api';
+import { authAPI, courseAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 function AddStudentForm() {
@@ -287,6 +287,137 @@ function AddTeacherForm() {
     );
 };
 
+function AddCourseForm() {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    teacher_id: ""
+  });
+
+  const [validated, setValidated] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleReset = () => {
+    setFormData({
+      name: "",
+      description: "",
+      teacher_id: ""
+    });
+    setValidated(false);
+    setSubmitSuccess(false);
+    setIsSubmitting(false);
+  };
+
+
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+
+      console.log('Form submitted:', formData);
+      const result = await courseAPI.create(formData);
+
+      if (result.success) {
+        setSubmitSuccess(true);
+        setValidated(true);
+      }
+
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert('Registration failed: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div>
+     { submitSuccess ? (
+       <Alert variant="success" className="text-center">
+         <Alert.Heading>Course Created Successfully</Alert.Heading>
+         <Button variant="primary" onClick={handleReset}>Add new</Button>
+       </Alert>
+     ) : (
+       <>
+         <Form noValidate validated={validated} onSubmit={handleSubmit}>
+           <Form.Group controlId="name" className="mb-3">
+             <Form.Label>Course Name / Code</Form.Label>
+             <Form.Control
+               required
+               type="text"
+               placeholder="CSSE6400"
+               name="name"
+               value={formData.name}
+               onChange={handleChange}
+             />
+             <Form.Control.Feedback type="invalid">
+               Please provide the course's name.
+             </Form.Control.Feedback>
+           </Form.Group>
+           <Form.Group controlId="description" className="mb-3">
+             <Form.Label>Description</Form.Label>
+             <Form.Control
+               required
+               type="description"
+               placeholder="Software Architecture"
+               name="description"
+               value={formData.description}
+               onChange={handleChange}
+             />
+             <Form.Control.Feedback type="invalid">
+               Please provide a description.
+             </Form.Control.Feedback>
+           </Form.Group>
+           <Form.Group controlId="phoneNumber" className="mb-3">
+             <Form.Label>Teacher ID</Form.Label>
+             <Form.Control
+               required
+               type="teacher_id"
+               placeholder="986214"
+               name="teacher_id"
+               value={formData.teacher_id}
+               onChange={handleChange}
+             />
+             <Form.Control.Feedback type="invalid">
+               Please provide the id of the teacher.
+             </Form.Control.Feedback>
+           </Form.Group>
+           <div className="d-grid gap-2 mt-4">
+             <Button
+               variant="primary"
+               type="submit"
+               size="lg"
+               disabled={isSubmitting}
+             >
+               {isSubmitting ? 'Adding Course...' : 'Add Course'}
+             </Button>
+           </div>
+         </Form>
+       </>
+     )}
+    </div>
+    );
+};
+
 const AssignmentModal = ({ show, onHide, onSubmit, courses = [] }) => {
   const [form, setForm] = useState({
     courseId: '',
@@ -383,4 +514,4 @@ const AssignmentModal = ({ show, onHide, onSubmit, courses = [] }) => {
   );
 };
 
-export { AddStudentForm, AddTeacherForm, AssignmentModal };
+export { AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal };

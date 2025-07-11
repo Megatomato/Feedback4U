@@ -110,7 +110,14 @@ export const adminAPI = {
 
 // Course API calls
 export const courseAPI = {
-  create: (data) => api.post('/courses', data),
+  create: (data) => {
+    const payload = {
+      course_name: data.name,
+      course_description: data.description,
+      course_teacher_id: data.teacher_id,
+    };
+    return api.post('/courses', payload);
+  },
   getAll: () => api.get('/courses'),
   getById: (id) => api.get(`/courses/${id}`),
 };

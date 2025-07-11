@@ -25,6 +25,7 @@ from database import (
     TeacherCreate,
     AdminCreate,
     UserResponse,
+    UserMeResponse,
     AdminResponse,
     StudentResponse,
     TeacherResponse,
@@ -119,11 +120,11 @@ async def root():
 async def health_check(db: Session = Depends(get_db)):
     try:
         # Test database connection with a simple query
-        db.execute(text("SELECT 1"))
+        db.execute("SELECT 1")
         return {
             "status": "healthy",
             "database": "connected",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
         raise HTTPException(
@@ -132,9 +133,10 @@ async def health_check(db: Session = Depends(get_db)):
                 "status": "unhealthy",
                 "database": "disconnected",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
-            },
+                "timestamp": datetime.utcnow().isoformat()
+            }
         )
+
 
 
 # Authentication routes
@@ -307,9 +309,38 @@ async def get_admins(current_user=Depends(get_current_user), db: Session = Depen
     return admins
 
 
-@app.get("/me")
+@app.get("/me", response_model=UserMeResponse)
 async def get_current_user_info(current_user=Depends(get_current_user)):
-    return current_user
+    # Normalize the user data based on user type
+    if isinstance(current_user, Student):
+        return UserMeResponse(
+            id=current_user.student_id,
+            name=current_user.student_name,
+            email=current_user.student_email,
+            phone=current_user.student_phone_number,
+            role="student",
+            school_admin_id=current_user.school_admin_id
+        )
+    elif isinstance(current_user, Teacher):
+        return UserMeResponse(
+            id=current_user.teacher_id,
+            name=current_user.teacher_name,
+            email=current_user.teacher_email,
+            phone=current_user.teacher_phone_number,
+            role="teacher",
+            school_admin_id=current_user.school_admin_id
+        )
+    elif isinstance(current_user, Admin):
+        return UserMeResponse(
+            id=current_user.admin_id,
+            name=current_user.admin_name,
+            email=current_user.admin_email,
+            phone=current_user.admin_phone_number,
+            role="admin",
+            school_name=current_user.school_name
+        )
+    else:
+        raise HTTPException(status_code=500, detail="Invalid user type")
 
 
 # Course and Assignment Routes
@@ -317,8 +348,8 @@ async def get_current_user_info(current_user=Depends(get_current_user)):
 def create_course(
     course: CourseCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
-    if not isinstance(current_user, Teacher):
-        raise HTTPException(status_code=403, detail="Only teachers can create courses")
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can create courses")
 
     db_course = Course(**course.model_dump(), course_is_active=True)
     db.add(db_course)
