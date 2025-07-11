@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Modal from 'react-bootstrap/Modal';
 
-import { authAPI, courseAPI } from '../services/api';
+import { authAPI, courseAPI, enrollmentAPI, studentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 function AddStudentForm() {
@@ -560,4 +560,160 @@ const AssignmentModal = ({ show, onHide, onSubmit, courses = [] }) => {
   );
 };
 
-export { AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal };
+function EnrollStudentForm() {
+  const [formData, setFormData] = useState({
+    student_id: "",
+    course_id: ""
+  });
+
+  const [validated, setValidated] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch students and courses when component mounts
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [studentsRes, coursesRes] = await Promise.all([
+          studentAPI.getAll(),
+          courseAPI.getAdminSchoolCourses()
+        ]);
+        setStudents(studentsRes.data || []);
+        setCourses(coursesRes.data || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: parseInt(value) || value
+    }));
+  };
+
+  const handleReset = () => {
+    setFormData({
+      student_id: "",
+      course_id: ""
+    });
+    setValidated(false);
+    setSubmitSuccess(false);
+    setIsSubmitting(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      console.log('Enrollment form submitted:', formData);
+      const result = await enrollmentAPI.create({
+        student_id: parseInt(formData.student_id),
+        course_id: parseInt(formData.course_id)
+      });
+
+      setSubmitSuccess(true);
+      setValidated(true);
+
+    } catch (error) {
+      console.error('Enrollment error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Enrollment failed';
+      alert('Enrollment failed: ' + errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading students and courses...</div>;
+  }
+
+  return (
+    <div>
+      {submitSuccess ? (
+        <Alert variant="success" className="text-center">
+          <Alert.Heading>Student Enrolled Successfully</Alert.Heading>
+          <p>The student has been enrolled in the course.</p>
+          <Button variant="primary" onClick={handleReset}>Enroll Another Student</Button>
+        </Alert>
+      ) : (
+        <>
+          <Form noValidate validated={validated} onSubmit={handleSubmit}>
+            <Form.Group controlId="student_id" className="mb-3">
+              <Form.Label>Select Student</Form.Label>
+              <Form.Select
+                required
+                name="student_id"
+                value={formData.student_id}
+                onChange={handleChange}
+              >
+                <option value="">Choose a student...</option>
+                {students.map(student => (
+                  <option key={student.student_id} value={student.student_id}>
+                    {student.student_name} ({student.student_email})
+                  </option>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Please select a student.
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="course_id" className="mb-3">
+              <Form.Label>Select Course</Form.Label>
+              <Form.Select
+                required
+                name="course_id"
+                value={formData.course_id}
+                onChange={handleChange}
+              >
+                <option value="">Choose a course...</option>
+                {courses.map(course => (
+                  <option key={course.course_id} value={course.course_id}>
+                    {course.course_name} - {course.teacher_name}
+                  </option>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                Please select a course.
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <div className="d-grid gap-2 mt-4">
+              <Button
+                variant="primary"
+                type="submit"
+                size="lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Enrolling Student...' : 'Enroll Student'}
+              </Button>
+            </div>
+          </Form>
+        </>
+      )}
+    </div>
+  );
+}
+
+export { AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal, EnrollStudentForm };

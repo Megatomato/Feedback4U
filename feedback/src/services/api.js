@@ -108,7 +108,9 @@ export const studentAPI = {
   getById: (id) => api.get(`/students/${id}`),
   create: (data) => api.post('/students', data),
   update: (id, data) => api.put(`/students/${id}`, data),
-  delete: (id) => api.delete(`/students/${id}`)
+  delete: (id) => api.delete(`/students/${id}`),
+  getCourses: () => api.get('/student/courses'),
+  getStatistics: () => api.get('/student/statistics'),
 };
 
 // Teacher API calls
@@ -123,6 +125,13 @@ export const teacherAPI = {
 export const adminAPI = {
   getAll: () => api.get('/admins'),
   getSchoolStatistics: () => api.get('/admin/statistics'), // Get statistics for admin's school
+};
+
+// Enrollment API calls
+export const enrollmentAPI = {
+  create: (data) => api.post('/enrollments', data),
+  getAll: () => api.get('/enrollments'),
+  drop: (studentId, courseId) => api.delete(`/enrollments/${studentId}/${courseId}`),
 };
 
 // Course API calls

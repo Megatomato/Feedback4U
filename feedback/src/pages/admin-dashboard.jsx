@@ -14,7 +14,7 @@ import Modal from "react-bootstrap/Modal"
 import { AdminNav }  from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { ATable } from '../components/Data.jsx';
-import { AddTeacherForm, AddStudentForm, AddCourseForm } from '../components/Forms.jsx';
+import { AddTeacherForm, AddStudentForm, AddCourseForm, EnrollStudentForm } from '../components/Forms.jsx';
 
 const AdminDashPage = () => {
   const { user } = useAuth();
@@ -81,6 +81,7 @@ const AdminDashPage = () => {
                   studentForm={<AddStudentForm/>}
                   teacherForm={<AddTeacherForm/>}
                   courseForm={<AddCourseForm/>}
+                  enrollForm={<EnrollStudentForm/>}
                 />
               </Col>
             </Row>
@@ -101,7 +102,7 @@ const AdminDashPage = () => {
     );
 };
 
-function ManagementButtons({ studentForm, teacherForm, courseForm }) {
+function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm }) {
   const [activeModal, setActiveModal] = useState(null);
 
   const handleClose = () => setActiveModal(null);
@@ -133,6 +134,9 @@ function ManagementButtons({ studentForm, teacherForm, courseForm }) {
               </Button>
               <Button variant="outline-primary" onClick={() => handleShow('editCourse')} className="mb-2">
                 Edit Course Information
+              </Button>
+              <Button variant="success" onClick={() => handleShow('enrollStudent')} className="mb-2">
+                Enroll Student in Course
               </Button>
             </ButtonGroup>
           </Card.Text>
@@ -218,6 +222,21 @@ function ManagementButtons({ studentForm, teacherForm, courseForm }) {
         </Modal.Header>
         <Modal.Body>
           {courseForm}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Enrollment Modal */}
+      <Modal show={activeModal === 'enrollStudent'} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Enroll Student in Course</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {enrollForm}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>

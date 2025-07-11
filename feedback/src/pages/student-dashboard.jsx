@@ -1,20 +1,58 @@
-import React from 'react';
-import { Container, Row, Col, Card, Badge, ProgressBar } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Badge, ProgressBar, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { sampleData } from '../data/sampleData';
 import { getDaysUntilDue } from '../utils/helpers';
 import { StudentNav } from '../components/Navbar';
+import { studentAPI } from '../services/api';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // State for real API data
+  const [courses, setCourses] = useState([]);
+  const [statistics, setStatistics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Get student's data
+  // Get student's data (keeping some hardcoded for assignments as requested)
   const student = sampleData.students.find(s => s.id === user.id);
-  const studentCourses = sampleData.courses.filter(course =>
-    student?.courses.includes(course.id)
-  );
+
+  // Fetch real data from API
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const [coursesRes, statisticsRes] = await Promise.all([
+          studentAPI.getCourses(),
+          studentAPI.getStatistics()
+        ]);
+
+        console.log('Student courses response:', coursesRes);
+        console.log('Student statistics response:', statisticsRes);
+
+        setCourses(coursesRes.data || []);
+        setStatistics(statisticsRes.data || null);
+
+      } catch (error) {
+        console.error("Failed to fetch student data", error);
+        console.error("Error details:", error.response?.data || error.message);
+        setError("Failed to load dashboard data. Please try again.");
+        
+        // Set safe defaults on error
+        setCourses([]);
+        setStatistics(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentData();
+  }, []);
 
   // Get recent submissions
   const recentSubmissions = sampleData.submissions
@@ -39,16 +77,50 @@ const StudentDashboard = () => {
     navigate(`/assignment/${assignmentId}`);
   };
 
+  if (loading) {
+    return (
+      <div>
+        <StudentNav/>
+        <Container className="my-4">
+          <div className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-2">Loading dashboard...</p>
+          </div>
+        </Container>
+      </div>
+    );
+  }
+
   return (
     <div>
     <StudentNav/>
     <Container className="my-4">
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="dashboard-header">
         <Row className="align-items-center mb-4">
           <Col>
             <h1 className="dashboard-title">Student Dashboard</h1>
-            <p className="dashboard-subtitle">Here's your academic overview</p>
+            <p className="dashboard-subtitle">
+              {statistics ? (
+                <>
+                  Welcome, <strong>{statistics.student_name}</strong> | {statistics.school_name}
+                </>
+              ) : (
+                "Here's your academic overview"
+              )}
+            </p>
+            {statistics && statistics.student_email && (
+              <small className="text-muted">{statistics.student_email}</small>
+            )}
           </Col>
         </Row>
       </div>
@@ -107,29 +179,49 @@ const StudentDashboard = () => {
             </Card.Header>
             <Card.Body className="p-0">
               <div className="list-group list-group-flush">
-                {studentCourses.map(course => (
-                  <div
-                    key={course.id}
-                    className="list-group-item list-group-item-action"
-                    onClick={() => handleCourseClick(course.id)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="d-flex justify-content-between align-items-start mb-2">
-                      <h6 className="mb-1">{course.name}</h6>
-                      <Badge bg="primary">{course.code}</Badge>
-                    </div>
-                    <small className="text-muted d-block mb-2">{course.instructor}</small>
-                    <div>
-                      <small className="text-muted">Progress: {course.completionRate}%</small>
-                      <ProgressBar
-                        now={course.completionRate}
-                        variant={course.completionRate >= 80 ? 'success' : course.completionRate >= 60 ? 'warning' : 'danger'}
-                        size="sm"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                ))}
+                {courses && courses.length > 0 ? (
+                  courses.map(course => {
+                    // Calculate progress based on submitted vs total assignments
+                    const progressRate = course.total_assignments > 0 
+                      ? Math.round((course.submitted_assignments / course.total_assignments) * 100) 
+                      : 0;
+                    
+                    return (
+                      <div
+                        key={course.course_id}
+                        className="list-group-item list-group-item-action"
+                        onClick={() => handleCourseClick(course.course_id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <h6 className="mb-1">{course.course_name}</h6>
+                          <Badge bg={course.course_is_active ? 'success' : 'secondary'}>
+                            {course.course_is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                        <small className="text-muted d-block mb-2">{course.teacher_name}</small>
+                        <div>
+                          <small className="text-muted">
+                            Assignments: {course.submitted_assignments}/{course.total_assignments}
+                          </small>
+                          <ProgressBar
+                            now={progressRate}
+                            variant={progressRate >= 80 ? 'success' : progressRate >= 60 ? 'warning' : 'danger'}
+                            size="sm"
+                            className="mt-1"
+                          />
+                        </div>
+                        {course.average_grade && (
+                          <small className="text-success">
+                            Average Grade: {course.average_grade}%
+                          </small>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-3 text-muted">No courses found</div>
+                )}
               </div>
             </Card.Body>
           </Card>
@@ -193,32 +285,38 @@ const StudentDashboard = () => {
               <h5 className="mb-0">📊 Performance Overview</h5>
             </Card.Header>
             <Card.Body>
-              <Row>
-                <Col md={3}>
-                  <div className="text-center">
-                    <h3 className="text-primary">{student?.averageGrade || 0}%</h3>
-                    <p className="text-muted mb-0">Average Grade</p>
-                  </div>
-                </Col>
-                <Col md={3}>
-                  <div className="text-center">
-                    <h3 className="text-primary">{student?.submissionRate || 0}%</h3>
-                    <p className="text-muted mb-0">Submission Rate</p>
-                  </div>
-                </Col>
-                <Col md={3}>
-                  <div className="text-center">
-                    <h3 className="text-primary">{studentCourses.length}</h3>
-                    <p className="text-muted mb-0">Enrolled Courses</p>
-                  </div>
-                </Col>
-                <Col md={3}>
-                  <div className="text-center">
-                    <h3 className="text-primary">{recentSubmissions.length}</h3>
-                    <p className="text-muted mb-0">Recent Submissions</p>
-                  </div>
-                </Col>
-              </Row>
+              {statistics ? (
+                <Row>
+                  <Col md={3}>
+                    <div className="text-center">
+                      <h3 className="text-primary">
+                        {statistics.overall_average_grade ? `${statistics.overall_average_grade}%` : 'N/A'}
+                      </h3>
+                      <p className="text-muted mb-0">Average Grade</p>
+                    </div>
+                  </Col>
+                  <Col md={3}>
+                    <div className="text-center">
+                      <h3 className="text-primary">{statistics.total_submissions}</h3>
+                      <p className="text-muted mb-0">Total Submissions</p>
+                    </div>
+                  </Col>
+                  <Col md={3}>
+                    <div className="text-center">
+                      <h3 className="text-primary">{statistics.total_courses}</h3>
+                      <p className="text-muted mb-0">Enrolled Courses</p>
+                    </div>
+                  </Col>
+                  <Col md={3}>
+                    <div className="text-center">
+                      <h3 className="text-primary">{statistics.pending_assignments}</h3>
+                      <p className="text-muted mb-0">Pending Assignments</p>
+                    </div>
+                  </Col>
+                </Row>
+              ) : (
+                <div className="text-center text-muted">Loading statistics...</div>
+              )}
             </Card.Body>
           </Card>
         </Col>
