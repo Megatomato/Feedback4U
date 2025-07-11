@@ -4,7 +4,7 @@ import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Modal from 'react-bootstrap/Modal';
 
-import { authAPI } from '../services/api';
+import { authAPI, courseAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 function AddStudentForm() {
@@ -58,11 +58,8 @@ function AddStudentForm() {
       console.log('Form submitted:', formData);
       const result = await authAPI.registerStudent(formData);
 
-      if (result.data) {
-        setStudentData(result.data); // Store the response data including password
-        setSubmitSuccess(true);
-        setValidated(true);
-      }
+      setSubmitSuccess(true);
+      setValidated(true);
 
     } catch (error) {
       console.error('Signup error:', error);
@@ -219,11 +216,8 @@ function AddTeacherForm() {
       console.log('Form submitted:', formData);
       const result = await authAPI.registerTeacher(formData);
 
-      if (result.data) {
-        setTeacherData(result.data); // Store the response data including password
         setSubmitSuccess(true);
         setValidated(true);
-      }
 
     } catch (error) {
       console.error('Signup error:', error);
@@ -239,22 +233,7 @@ function AddTeacherForm() {
      { submitSuccess ? (
        <Alert variant="success" className="text-center">
          <Alert.Heading>Teacher Created Successfully</Alert.Heading>
-         <div className="mb-3">
-           <p><strong>Name:</strong> {teacherData.name}</p>
-           <p><strong>Email:</strong> {teacherData.email}</p>
-           <p><strong>Temporary Password:</strong> 
-             <code className="ms-2 p-2 bg-light text-danger">
-               {teacherData.generated_password}
-             </code>
-           </p>
-         </div>
-         <Alert variant="warning" className="mb-3">
-           <small>
-             <strong>Important:</strong> Please share this temporary password with the teacher securely. 
-             They should change it after their first login.
-           </small>
-         </Alert>
-         <Button variant="primary" onClick={handleReset}>Add Another Teacher</Button>
+         <Button variant="primary" onClick={handleReset}>Add new</Button>
        </Alert>
      ) : (
        <>
@@ -309,6 +288,136 @@ function AddTeacherForm() {
                disabled={isSubmitting}
              >
                {isSubmitting ? 'Creating Teacher...' : 'Create Teacher with Auto-Generated Password'}
+             </Button>
+           </div>
+         </Form>
+       </>
+     )}
+    </div>
+    );
+};
+
+function AddCourseForm() {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    teacher_id: ""
+  });
+
+  const [validated, setValidated] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleReset = () => {
+    setFormData({
+      name: "",
+      description: "",
+      teacher_id: ""
+    });
+    setValidated(false);
+    setSubmitSuccess(false);
+    setIsSubmitting(false);
+  };
+
+
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+
+      console.log('Form submitted:', formData);
+      const result = await courseAPI.create(formData);
+
+        setSubmitSuccess(true);
+        setValidated(true);
+
+
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert('Registration failed: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div>
+     { submitSuccess ? (
+       <Alert variant="success" className="text-center">
+         <Alert.Heading>Course Created Successfully</Alert.Heading>
+         <Button variant="primary" onClick={handleReset}>Add new</Button>
+       </Alert>
+     ) : (
+       <>
+         <Form noValidate validated={validated} onSubmit={handleSubmit}>
+           <Form.Group controlId="name" className="mb-3">
+             <Form.Label>Course Name / Code</Form.Label>
+             <Form.Control
+               required
+               type="text"
+               placeholder="CSSE6400"
+               name="name"
+               value={formData.name}
+               onChange={handleChange}
+             />
+             <Form.Control.Feedback type="invalid">
+               Please provide the course's name.
+             </Form.Control.Feedback>
+           </Form.Group>
+           <Form.Group controlId="description" className="mb-3">
+             <Form.Label>Description</Form.Label>
+             <Form.Control
+               required
+               type="description"
+               placeholder="Software Architecture"
+               name="description"
+               value={formData.description}
+               onChange={handleChange}
+             />
+             <Form.Control.Feedback type="invalid">
+               Please provide a description.
+             </Form.Control.Feedback>
+           </Form.Group>
+           <Form.Group controlId="phoneNumber" className="mb-3">
+             <Form.Label>Teacher ID</Form.Label>
+             <Form.Control
+               required
+               type="teacher_id"
+               placeholder="986214"
+               name="teacher_id"
+               value={formData.teacher_id}
+               onChange={handleChange}
+             />
+             <Form.Control.Feedback type="invalid">
+               Please provide the id of the teacher.
+             </Form.Control.Feedback>
+           </Form.Group>
+           <div className="d-grid gap-2 mt-4">
+             <Button
+               variant="primary"
+               type="submit"
+               size="lg"
+               disabled={isSubmitting}
+             >
+               {isSubmitting ? 'Adding Course...' : 'Add Course'}
              </Button>
            </div>
          </Form>
@@ -414,4 +523,4 @@ const AssignmentModal = ({ show, onHide, onSubmit, courses = [] }) => {
   );
 };
 
-export { AddStudentForm, AddTeacherForm, AssignmentModal };
+export { AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal };

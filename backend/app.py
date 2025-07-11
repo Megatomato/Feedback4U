@@ -371,8 +371,8 @@ async def get_current_user_info(current_user=Depends(get_current_user)):
 def create_course(
     course: CourseCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
-    if not isinstance(current_user, Teacher):
-        raise HTTPException(status_code=403, detail="Only teachers can create courses")
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can create courses")
 
     db_course = Course(**course.model_dump(), course_is_active=True)
     db.add(db_course)
@@ -453,15 +453,22 @@ async def submit_assignment(
             response = await client.post(f"{rag_api_url}/get-feedback/", files=files, data=data)
             response.raise_for_status()
             feedback_data = response.json()
-            feedback_json = json.loads(feedback_data.get("feedback", "{}"))
+            feedback_json = json.loads(feedback_data) if isinstance(feedback_data, str) else feedback_data
     except httpx.RequestError as e:
         raise HTTPException(status_code=500, detail=f"Error calling RAG API: {e}")
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Failed to parse feedback from RAG API")
 
-    # 2. Save submission to user_data DB
-    grade_list = feedback_json.get("grades", [])
-    feedback_text = feedback_json.get("overall_feedback", "")
+    feedback_text = json.dumps(feedback_json)
+
+    if "overall_evaluation" in feedback_json:
+        overall_mark = feedback_json.get("overall_evaluation", {}).get("mark_out_of_20", 0)
+    else:
+        # Legacy fallback: use average of provided grades or 0.
+        grades_fallback = feedback_json.get("grades", [])
+        overall_mark = sum(grades_fallback) / len(grades_fallback) if grades_fallback else 0
+
+    grade_list = [overall_mark]
 
     new_submission = SubmittedAssignment(
         submitted_assignment_student_id=current_user.student_id,

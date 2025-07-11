@@ -55,17 +55,6 @@ GITEE_API_KEY = os.getenv("GITEE_API_KEY")
 Base = declarative_base(metadata=MetaData())
 
 
-class AssignmentChunk(Base):
-    __tablename__ = "assignment_chunks"
-    id = Column(BigInteger, primary_key=True)
-    student_id = Column(Text, nullable=False)
-    assignment_id = Column(Text, nullable=False)
-    course_id = Column(Text, nullable=False)
-    chunk_no = Column(Integer, nullable=False)
-    content = Column(Text, nullable=False)
-    embedding = Column(pgvector.sqlalchemy.Vector(), nullable=False)  # no argument
-
-
 class ReferenceChunk(Base):
     __tablename__ = "reference_chunks"
     id = Column(BigInteger, primary_key=True)
@@ -329,98 +318,34 @@ def clean_chunks(chunks: List[str]) -> List[str]:
 # ---------------------------------------------------------------------
 
 
-def topk_assignment(session, assignment_id: str, query_vec: List[float], k: int = 4):
+def topk_reference_chunks(session, course_id: str, query_vec: List[float], k: int = 6):
     stmt = sqltext(
         """
         SELECT content
-        FROM   assignment_chunks
-        WHERE  assignment_id = :aid
+        FROM   reference_chunks
+        WHERE  course_id = :cid
         ORDER  BY embedding <-> CAST(:qvec AS VECTOR)
         LIMIT  :limit;
         """
     )
     rows = session.execute(
-        stmt, {"aid": assignment_id, "qvec": str(query_vec), "limit": k}
+        stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}
     ).fetchall()
     return [r[0] for r in rows]
 
 
-def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4):
+def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4, doc_type: str = "rubric"):
     stmt = sqltext(
         """
         SELECT content
         FROM   reference_chunks
-        WHERE  course_id = :cid AND doc_type = 'rubric'
+        WHERE  course_id = :cid AND doc_type = :dtype
         ORDER  BY embedding <-> CAST(:qvec AS VECTOR)
         LIMIT  :limit;
         """
     )
-    rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}).fetchall()
+    rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k, "dtype": doc_type}).fetchall()
     return [r[0] for r in rows]
-
-
-def ingest_file(
-    file_path: str,
-    student_id: str,
-    assignment_id: str,
-    course_id: str,
-    chunker: str,
-    embedder_name: str,
-):
-    # -- setup DB session
-    engine = create_engine(DB_URL)
-
-    with engine.begin() as conn:
-        try:
-            conn.execute(sqltext("CREATE EXTENSION IF NOT EXISTS vector"))
-        except ProgrammingError:
-            raise
-
-    Base.metadata.create_all(engine)
-
-    Session = sessionmaker(bind=engine)
-    embedder = EmbeddingModel(embedder_name)
-    splitter_texts: List[str] = run_chunker(file_path, chunker)
-    if isinstance(splitter_texts, list) and isinstance(splitter_texts[0], str):
-        chunks = splitter_texts
-    else:  # preprocessing scripts might return list[dict]
-        chunks = [c["content"] if isinstance(c, dict) else str(c) for c in splitter_texts]
-
-    chunks = [chunk.replace("\x00", "") for chunk in chunks]
-
-    # Clean the chunks to remove headers, footers, and junk
-    chunks = clean_chunks(chunks)
-
-    # ADDED FOR DEBUGGING: Log chunks and filter empty ones
-    # logging.info("---BEGIN CHUNKS---")
-    # for i, chunk in enumerate(chunks):
-    #     logging.info(f"Chunk {i+1}: '{chunk}'")
-    # logging.info("---END CHUNKS---")
-
-    sanitized_chunks = [chunk for chunk in chunks if chunk and chunk.strip()]
-    if not sanitized_chunks:
-        logging.warning("No non-empty chunks found after cleaning. Skipping embedding.")
-        return None
-
-    vectors = embedder.embed(sanitized_chunks)
-
-    objects = [
-        AssignmentChunk(
-            student_id=student_id,
-            assignment_id=assignment_id,
-            course_id=course_id,
-            chunk_no=i + 1,
-            content=txt,
-            embedding=vec,
-        )
-        for i, (txt, vec) in enumerate(zip(sanitized_chunks, vectors))
-    ]
-
-    with Session.begin() as session:
-        session.bulk_save_objects(objects)
-
-    logging.info("Ingestion complete for %s", file_path)
-    return vectors[0] if vectors else None
 
 
 def ingest_reference_file(

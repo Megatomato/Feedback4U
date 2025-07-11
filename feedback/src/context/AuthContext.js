@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   const getUserType = () => {
     if (!user) return null;
 
-    // Use the standardized role field from the new /me endpoint response
+    // Use the role field from the normalized user response
     return user.role || null;
   };
 
