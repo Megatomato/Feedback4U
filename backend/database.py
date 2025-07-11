@@ -10,6 +10,7 @@ from sqlalchemy import (
     DECIMAL,
     Text,
     ForeignKeyConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.declarative import declarative_base
@@ -264,3 +265,94 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def create_cross_table_email_uniqueness_triggers(engine):
+    """
+    Create database triggers to enforce email uniqueness across admin, teachers, and students tables.
+    This provides database-level constraint enforcement in addition to application-level validation.
+    """
+    with engine.begin() as conn:
+        # Create separate trigger functions for each table to handle different column names
+        
+        # Admin table trigger function
+        conn.execute(text("""
+            CREATE OR REPLACE FUNCTION check_admin_email_uniqueness() 
+            RETURNS TRIGGER AS $$
+            BEGIN
+                -- Check if email exists in teachers table
+                IF EXISTS (SELECT 1 FROM teachers WHERE teacher_email = NEW.admin_email) THEN
+                    RAISE EXCEPTION 'Email already exists in teachers table';
+                END IF;
+                
+                -- Check if email exists in students table
+                IF EXISTS (SELECT 1 FROM students WHERE student_email = NEW.admin_email) THEN
+                    RAISE EXCEPTION 'Email already exists in students table';
+                END IF;
+                
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """))
+        
+        # Teachers table trigger function
+        conn.execute(text("""
+            CREATE OR REPLACE FUNCTION check_teacher_email_uniqueness() 
+            RETURNS TRIGGER AS $$
+            BEGIN
+                -- Check if email exists in admin table
+                IF EXISTS (SELECT 1 FROM admin WHERE admin_email = NEW.teacher_email) THEN
+                    RAISE EXCEPTION 'Email already exists in admin table';
+                END IF;
+                
+                -- Check if email exists in students table
+                IF EXISTS (SELECT 1 FROM students WHERE student_email = NEW.teacher_email) THEN
+                    RAISE EXCEPTION 'Email already exists in students table';
+                END IF;
+                
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """))
+        
+        # Students table trigger function
+        conn.execute(text("""
+            CREATE OR REPLACE FUNCTION check_student_email_uniqueness() 
+            RETURNS TRIGGER AS $$
+            BEGIN
+                -- Check if email exists in admin table
+                IF EXISTS (SELECT 1 FROM admin WHERE admin_email = NEW.student_email) THEN
+                    RAISE EXCEPTION 'Email already exists in admin table';
+                END IF;
+                
+                -- Check if email exists in teachers table
+                IF EXISTS (SELECT 1 FROM teachers WHERE teacher_email = NEW.student_email) THEN
+                    RAISE EXCEPTION 'Email already exists in teachers table';
+                END IF;
+                
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+        """))
+        
+        # Create triggers for each table
+        conn.execute(text("""
+            DROP TRIGGER IF EXISTS check_admin_email_uniqueness ON admin;
+            CREATE TRIGGER check_admin_email_uniqueness 
+                BEFORE INSERT OR UPDATE ON admin 
+                FOR EACH ROW EXECUTE FUNCTION check_admin_email_uniqueness();
+        """))
+        
+        conn.execute(text("""
+            DROP TRIGGER IF EXISTS check_teacher_email_uniqueness ON teachers;
+            CREATE TRIGGER check_teacher_email_uniqueness 
+                BEFORE INSERT OR UPDATE ON teachers 
+                FOR EACH ROW EXECUTE FUNCTION check_teacher_email_uniqueness();
+        """))
+        
+        conn.execute(text("""
+            DROP TRIGGER IF EXISTS check_student_email_uniqueness ON students;
+            CREATE TRIGGER check_student_email_uniqueness 
+                BEFORE INSERT OR UPDATE ON students 
+                FOR EACH ROW EXECUTE FUNCTION check_student_email_uniqueness();
+        """))

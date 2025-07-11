@@ -36,6 +36,7 @@ from database import (
     SubmissionResponse,
     Token,
     get_db,
+    create_cross_table_email_uniqueness_triggers,
 )
 
 # Security setup
@@ -78,6 +79,29 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+def check_email_exists_across_all_tables(email: str, db: Session) -> bool:
+    """
+    Check if an email exists in any of the user tables (admin, teachers, students).
+    Returns True if email exists, False otherwise.
+    """
+    # Check admin table
+    admin_exists = db.query(Admin).filter(Admin.admin_email == email).first() is not None
+    if admin_exists:
+        return True
+    
+    # Check teachers table
+    teacher_exists = db.query(Teacher).filter(Teacher.teacher_email == email).first() is not None
+    if teacher_exists:
+        return True
+    
+    # Check students table
+    student_exists = db.query(Student).filter(Student.student_email == email).first() is not None
+    if student_exists:
+        return True
+    
+    return False
 
 
 # Authentication dependency
@@ -142,8 +166,8 @@ async def health_check(db: Session = Depends(get_db)):
 # Authentication routes
 @app.post("/auth/register/admin", response_model=AdminResponse)
 async def register_admin(admin: AdminCreate, db: Session = Depends(get_db)):
-    # Check if email already exists
-    if db.query(Admin).filter(Admin.admin_email == admin.email).first():
+    # Check if email already exists across all user tables
+    if check_email_exists_across_all_tables(admin.email, db):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     # Map plan to subscription details
@@ -202,7 +226,8 @@ async def register_admin(admin: AdminCreate, db: Session = Depends(get_db)):
 
 @app.post("/auth/register/teacher", response_model=UserResponse)
 async def register_teacher(user: TeacherCreate, db: Session = Depends(get_db)):
-    if db.query(Teacher).filter(Teacher.teacher_email == user.email).first():
+    # Check if email already exists across all user tables
+    if check_email_exists_across_all_tables(user.email, db):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     db_teacher = Teacher(
@@ -224,7 +249,8 @@ async def register_teacher(user: TeacherCreate, db: Session = Depends(get_db)):
 
 @app.post("/auth/register/student", response_model=UserResponse)
 async def register_student(user: UserCreate, db: Session = Depends(get_db)):
-    if db.query(Student).filter(Student.student_email == user.email).first():
+    # Check if email already exists across all user tables
+    if check_email_exists_across_all_tables(user.email, db):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     db_student = Student(
@@ -482,4 +508,5 @@ async def submit_assignment(
 
 if __name__ == "__main__":
     database.Base.metadata.create_all(bind=database.engine)
+    create_cross_table_email_uniqueness_triggers(database.engine)
     uvicorn.run(app, host="0.0.0.0", port=int(PORT))
