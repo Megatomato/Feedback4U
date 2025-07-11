@@ -16,11 +16,11 @@ from passwordgenerator import pwgenerator
 
 # Import database models and schemas
 from database import (
-    get_db, Admin, Teacher, Student, Course, Assignment, SubmittedAssignment,
+    get_db, Admin, Teacher, Student, Course, Assignment, Enrollment, SubmittedAssignment,
     AdminCreate, AdminResponse, TeacherCreate, TeacherCreateResponse, 
     UserCreate, UserResponse, StudentCreateResponse, UserMeResponse,
-    StudentResponse, TeacherResponse, CourseCreate, CourseResponse, CourseWithTeacherResponse,
-    AssignmentCreate, AssignmentResponse, SubmissionResponse, Token,
+    StudentResponse, TeacherResponse, CourseCreate, CourseResponse, CourseWithTeacherResponse, CourseWithStatsResponse, StudentCourseResponse,
+    EnrollmentCreate, EnrollmentResponse, AssignmentCreate, AssignmentResponse, SubmissionResponse, Token,
     create_cross_table_email_uniqueness_triggers
 )
 
@@ -371,6 +371,115 @@ async def get_admin_school_statistics(current_user=Depends(get_current_user), db
     }
 
 
+@app.get("/teacher/statistics")
+async def get_teacher_statistics(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get statistics for the current teacher"""
+    if not isinstance(current_user, Teacher):
+        raise HTTPException(status_code=403, detail="Only teachers can access their statistics")
+    
+    teacher_id = current_user.teacher_id
+    
+    # Count courses taught by this teacher
+    total_courses = db.query(Course).filter(Course.course_teacher_id == teacher_id).count()
+    
+    # Count assignments created by this teacher (assignments are linked to courses)
+    course_ids = db.query(Course.course_id).filter(Course.course_teacher_id == teacher_id).subquery()
+    total_assignments = db.query(Assignment).filter(Assignment.assignment_course_id.in_(course_ids)).count()
+    
+    # Count submissions to this teacher's assignments
+    try:
+        assignment_ids = db.query(Assignment.assignment_id).filter(Assignment.assignment_course_id.in_(course_ids)).subquery()
+        total_submissions = db.query(SubmittedAssignment).filter(
+            SubmittedAssignment.submitted_assignment_assignment_id.in_(assignment_ids)
+        ).count()
+    except:
+        total_submissions = 0
+    
+    # Get teacher's school info
+    admin = db.query(Admin).filter(Admin.admin_id == current_user.school_admin_id).first()
+    school_name = admin.school_name if admin else "Unknown School"
+    
+    return {
+        "teacher_name": current_user.teacher_name,
+        "teacher_email": current_user.teacher_email,
+        "school_name": school_name,
+        "total_courses": total_courses,
+        "total_assignments": total_assignments,
+        "total_submissions": total_submissions
+    }
+
+
+@app.get("/student/statistics")
+async def get_student_statistics(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get statistics for the current student"""
+    if not isinstance(current_user, Student):
+        raise HTTPException(status_code=403, detail="Only students can access their statistics")
+    
+    student_id = current_user.student_id
+    
+    # Count courses the student is enrolled in
+    total_courses = db.query(Enrollment).filter(
+        Enrollment.student_id == student_id
+    ).count()
+    
+    # Count total submissions by this student
+    total_submissions = db.query(SubmittedAssignment).filter(
+        SubmittedAssignment.submitted_assignment_student_id == student_id
+    ).count()
+    
+    # Calculate overall average grade
+    try:
+        submissions_with_grades = db.query(SubmittedAssignment).filter(
+            SubmittedAssignment.submitted_assignment_student_id == student_id,
+            SubmittedAssignment.ai_grade.isnot(None)
+        ).all()
+        
+        if submissions_with_grades:
+            all_grades = []
+            for submission in submissions_with_grades:
+                if submission.ai_grade and len(submission.ai_grade) > 0:
+                    all_grades.extend([float(grade) for grade in submission.ai_grade])
+            
+            overall_average_grade = round(sum(all_grades) / len(all_grades), 2) if all_grades else None
+        else:
+            overall_average_grade = None
+    except:
+        overall_average_grade = None
+    
+    # Count pending assignments (assignments not yet submitted in enrolled courses)
+    try:
+        # Get all course IDs the student is enrolled in
+        enrolled_course_ids = (
+            db.query(Enrollment.course_id)
+            .filter(Enrollment.student_id == student_id)
+            .subquery()
+        )
+        
+        # Count all assignments in enrolled courses
+        total_available_assignments = db.query(Assignment).filter(
+            Assignment.assignment_course_id.in_(enrolled_course_ids)
+        ).count()
+        
+        pending_assignments = total_available_assignments - total_submissions
+        pending_assignments = max(0, pending_assignments)  # Ensure non-negative
+    except:
+        pending_assignments = 0
+    
+    # Get student's school info
+    admin = db.query(Admin).filter(Admin.admin_id == current_user.school_admin_id).first()
+    school_name = admin.school_name if admin else "Unknown School"
+    
+    return {
+        "student_name": current_user.student_name,
+        "student_email": current_user.student_email,
+        "school_name": school_name,
+        "total_courses": total_courses,
+        "total_submissions": total_submissions,
+        "pending_assignments": pending_assignments,
+        "overall_average_grade": overall_average_grade
+    }
+
+
 @app.get("/me", response_model=UserMeResponse)
 async def get_current_user_info(current_user=Depends(get_current_user)):
     # Normalize the user data based on user type
@@ -465,6 +574,215 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     return course
+
+
+@app.get("/teacher/courses", response_model=List[CourseWithStatsResponse])
+def get_teacher_courses(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all courses taught by the current teacher with assignment and submission statistics"""
+    if not isinstance(current_user, Teacher):
+        raise HTTPException(status_code=403, detail="Only teachers can access their courses")
+    
+    # Get all courses taught by this teacher
+    courses = db.query(Course).filter(Course.course_teacher_id == current_user.teacher_id).all()
+    
+    # Build response with statistics for each course
+    result = []
+    for course in courses:
+        # Count assignments for this course
+        assignment_count = db.query(Assignment).filter(Assignment.assignment_course_id == course.course_id).count()
+        
+        # Count submissions for assignments in this course
+        try:
+            assignment_ids = db.query(Assignment.assignment_id).filter(Assignment.assignment_course_id == course.course_id).subquery()
+            submission_count = db.query(SubmittedAssignment).filter(
+                SubmittedAssignment.submitted_assignment_assignment_id.in_(assignment_ids)
+            ).count()
+        except:
+            submission_count = 0
+        
+        result.append(CourseWithStatsResponse(
+            course_id=course.course_id,
+            course_name=course.course_name,
+            course_description=course.course_description,
+            course_is_active=course.course_is_active,
+            course_teacher_id=course.course_teacher_id,
+            assignment_count=assignment_count,
+            submission_count=submission_count
+        ))
+    
+    return result
+
+
+@app.get("/student/courses", response_model=List[StudentCourseResponse])
+def get_student_courses(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all courses the current student is enrolled in with statistics"""
+    if not isinstance(current_user, Student):
+        raise HTTPException(status_code=403, detail="Only students can access their courses")
+    
+    student_id = current_user.student_id
+    
+    # Find all courses where the student is enrolled
+    courses_query = (
+        db.query(Course, Teacher, Enrollment)
+        .join(Enrollment, Course.course_id == Enrollment.course_id)
+        .join(Teacher, Course.course_teacher_id == Teacher.teacher_id)
+        .filter(Enrollment.student_id == student_id)
+        .all()
+    )
+    
+    result = []
+    for course, teacher, enrollment in courses_query:
+        # Count total assignments in this course
+        total_assignments = db.query(Assignment).filter(Assignment.assignment_course_id == course.course_id).count()
+        
+        # Count submitted assignments by this student in this course
+        submitted_assignments = (
+            db.query(SubmittedAssignment)
+            .join(Assignment, SubmittedAssignment.submitted_assignment_assignment_id == Assignment.assignment_id)
+            .filter(
+                Assignment.assignment_course_id == course.course_id,
+                SubmittedAssignment.submitted_assignment_student_id == student_id
+            )
+            .count()
+        )
+        
+        # Calculate average grade for this student in this course
+        try:
+            submissions = (
+                db.query(SubmittedAssignment)
+                .join(Assignment, SubmittedAssignment.submitted_assignment_assignment_id == Assignment.assignment_id)
+                .filter(
+                    Assignment.assignment_course_id == course.course_id,
+                    SubmittedAssignment.submitted_assignment_student_id == student_id,
+                    SubmittedAssignment.ai_grade.isnot(None)
+                )
+                .all()
+            )
+            
+            if submissions:
+                grades = []
+                for submission in submissions:
+                    if submission.ai_grade and len(submission.ai_grade) > 0:
+                        grades.extend([float(grade) for grade in submission.ai_grade])
+                
+                average_grade = round(sum(grades) / len(grades), 2) if grades else None
+            else:
+                average_grade = None
+        except:
+            average_grade = None
+        
+        result.append(StudentCourseResponse(
+            course_id=course.course_id,
+            course_name=course.course_name,
+            course_description=course.course_description,
+            course_is_active=course.course_is_active,
+            teacher_name=teacher.teacher_name,
+            teacher_email=teacher.teacher_email,
+            total_assignments=total_assignments,
+            submitted_assignments=submitted_assignments,
+            average_grade=average_grade
+        ))
+    
+    return result
+
+
+@app.post("/enrollments", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
+def create_enrollment(enrollment: EnrollmentCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Enroll a student in a course (admin or teacher only)"""
+    if not isinstance(current_user, (Admin, Teacher)):
+        raise HTTPException(status_code=403, detail="Only admins or teachers can enroll students")
+    
+    # Check if student exists and belongs to the same school
+    student = db.query(Student).filter(Student.student_id == enrollment.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Check if course exists
+    course = db.query(Course).filter(Course.course_id == enrollment.course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Verify school permissions
+    if isinstance(current_user, Admin):
+        if student.school_admin_id != current_user.admin_id:
+            raise HTTPException(status_code=403, detail="Can only enroll students from your school")
+    elif isinstance(current_user, Teacher):
+        if student.school_admin_id != current_user.school_admin_id:
+            raise HTTPException(status_code=403, detail="Can only enroll students from your school")
+        if course.course_teacher_id != current_user.teacher_id:
+            raise HTTPException(status_code=403, detail="Can only enroll students in your own courses")
+    
+    # Check if enrollment already exists
+    existing_enrollment = db.query(Enrollment).filter(
+        Enrollment.student_id == enrollment.student_id,
+        Enrollment.course_id == enrollment.course_id
+    ).first()
+    
+    if existing_enrollment:
+        raise HTTPException(status_code=400, detail="Student is already enrolled in this course")
+    
+    # Create new enrollment
+    db_enrollment = Enrollment(
+        student_id=enrollment.student_id,
+        course_id=enrollment.course_id
+    )
+    
+    db.add(db_enrollment)
+    db.commit()
+    db.refresh(db_enrollment)
+    return db_enrollment
+
+
+@app.get("/enrollments", response_model=List[EnrollmentResponse])
+def get_enrollments(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all enrollments (admin only)"""
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can view all enrollments")
+    
+    # Get enrollments for students in this admin's school
+    enrollments = (
+        db.query(Enrollment)
+        .join(Student, Enrollment.student_id == Student.student_id)
+        .filter(Student.school_admin_id == current_user.admin_id)
+        .all()
+    )
+    
+    return enrollments
+
+
+@app.delete("/enrollments/{student_id}/{course_id}")
+def drop_enrollment(student_id: int, course_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """Drop a student from a course (admin or teacher only)"""
+    if not isinstance(current_user, (Admin, Teacher)):
+        raise HTTPException(status_code=403, detail="Only admins or teachers can drop students")
+    
+    # Find the enrollment
+    enrollment = db.query(Enrollment).filter(
+        Enrollment.student_id == student_id,
+        Enrollment.course_id == course_id
+    ).first()
+    
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+    
+    # Check permissions
+    student = db.query(Student).filter(Student.student_id == student_id).first()
+    course = db.query(Course).filter(Course.course_id == course_id).first()
+    
+    if isinstance(current_user, Admin):
+        if student.school_admin_id != current_user.admin_id:
+            raise HTTPException(status_code=403, detail="Can only manage students from your school")
+    elif isinstance(current_user, Teacher):
+        if student.school_admin_id != current_user.school_admin_id:
+            raise HTTPException(status_code=403, detail="Can only manage students from your school")
+        if course.course_teacher_id != current_user.teacher_id:
+            raise HTTPException(status_code=403, detail="Can only manage enrollments in your own courses")
+    
+    # Delete the enrollment
+    db.delete(enrollment)
+    db.commit()
+    
+    return {"message": "Student dropped from course successfully"}
 
 
 @app.post("/assignments", response_model=AssignmentResponse, status_code=status.HTTP_201_CREATED)

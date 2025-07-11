@@ -105,6 +105,20 @@ class Assignment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Enrollment(Base):
+    __tablename__ = "enrollments"
+    enrollment_id = Column(Integer, primary_key=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("students.student_id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.course_id"), nullable=False)
+    enrollment_date = Column(DateTime, default=datetime.utcnow)
+    
+    # Ensure unique enrollment per student-course pair (matches schema.sql)
+    __table_args__ = (
+        ForeignKeyConstraint(['student_id'], ['students.student_id']),
+        ForeignKeyConstraint(['course_id'], ['courses.course_id']),
+    )
+
+
 class SubmittedAssignment(Base):
     __tablename__ = "submitted_assignments"
     submission_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -238,6 +252,49 @@ class CourseWithTeacherResponse(BaseModel):
     course_teacher_id: int
     teacher_name: str
     teacher_email: str
+
+    class Config:
+        from_attributes = True
+
+
+class CourseWithStatsResponse(BaseModel):
+    course_id: int
+    course_name: str
+    course_description: str
+    course_is_active: bool
+    course_teacher_id: int
+    assignment_count: int
+    submission_count: int
+
+    class Config:
+        from_attributes = True
+
+
+class StudentCourseResponse(BaseModel):
+    course_id: int
+    course_name: str
+    course_description: str
+    course_is_active: bool
+    teacher_name: str
+    teacher_email: str
+    total_assignments: int
+    submitted_assignments: int
+    average_grade: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+class EnrollmentCreate(BaseModel):
+    student_id: int
+    course_id: int
+
+
+class EnrollmentResponse(BaseModel):
+    enrollment_id: int
+    student_id: int
+    course_id: int
+    enrollment_date: datetime
 
     class Config:
         from_attributes = True
