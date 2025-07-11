@@ -156,6 +156,19 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+class UserMeResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    phone: str
+    role: str
+    school_admin_id: Optional[int] = None
+    school_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
 class AdminResponse(BaseModel):
     admin_id: int
     school_name: str

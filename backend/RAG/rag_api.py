@@ -13,7 +13,12 @@ import json
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from rag_db import ingest_file, ingest_reference_file, get_db_session as get_db
+from rag_db import (
+    ingest_reference_file,
+    extract_text,
+    EmbeddingModel,
+    get_db_session as get_db,
+)
 from llm import generate_and_store_feedback
 from statistics_api import router as statistics_router
 
@@ -98,9 +103,6 @@ async def get_feedback(
     student_id: str = Form(..., description="Student ID."),
     assignment_id: str = Form(..., description="Assignment ID or name."),
     course_id: str = Form(..., description="Course ID, e.g. 'MATH101'."),
-    chunker: str = Form(
-        "recursive", enum=["recursive", "semantic"], description="Chunking strategy."
-    ),
     embedder: str = Form(
         "gitee",
         enum=["openai", "gemini", "gitee"],
@@ -123,33 +125,36 @@ async def get_feedback(
             tmp.write(await file.read())
             tmp_path = tmp.name
 
-        logging.info(f"Ingesting assignment: {file.filename} for student {student_id}")
-        qvec = ingest_file(
-            file_path=tmp_path,
-            student_id=student_id,
-            assignment_id=assignment_id,
-            course_id=course_id,
-            chunker=chunker,
-            embedder_name=embedder,
-        )
+        # 1. Extract text from the assignment
+        logging.info(f"Extracting text from assignment: {file.filename}")
+        essay_text = extract_text(tmp_path)
+        if not essay_text.strip():
+            raise HTTPException(status_code=400, detail="The submitted document is empty.")
+
+        # 2. Get a query vector for the whole essay
+        logging.info("Creating a query vector for the essay.")
+        embedder_model = EmbeddingModel(embedder)
+        qvec = embedder_model.embed([essay_text])[0]
 
         if not qvec:
             raise HTTPException(
-                status_code=500, detail="Failed to ingest file and get query vector."
+                status_code=500, detail="Failed to create a query vector for the essay."
             )
 
-        logging.info("Ingestion complete. Generating feedback...")
+        # 3. Generate feedback
+        logging.info("Generating feedback...")
         feedback_raw = generate_and_store_feedback(
             student_id=student_id,
             assignment_id=assignment_id,
             course_id=course_id,
             qvec=qvec,
+            essay_text=essay_text,
             provider=provider,
         )
 
         # The feedback is stored as a JSON string in the DB, so we return it as such.
         # For a cleaner API, it might be better to parse and return a JSON object.
-# backend/RAG/rag_api.py
+        # backend/RAG/rag_api.py
 
         try:
             feedback_dict = json.loads(feedback_raw)
