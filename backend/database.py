@@ -124,10 +124,20 @@ class SubmittedAssignment(Base):
 # Pydantic schemas
 class TeacherCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: Optional[str] = None  # Make password optional for auto-generation
     name: str
     phone_number: str
     school_admin_id: int
+
+
+class TeacherCreateResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    generated_password: str  # Include the generated password in response
+    
+    class Config:
+        from_attributes = True
 
 
 class UserCreate(BaseModel):

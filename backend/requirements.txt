@@ -12,3 +12,6 @@ email-validator>=2.0
 # --- Database / vector search ---
 sqlalchemy>=2.0
 psycopg2-binary>=2.9
+
+# --- Password generation ---
+passwordgenerator>=1.4

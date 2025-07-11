@@ -12,6 +12,7 @@ import json
 from typing import Optional, List
 import uvicorn
 import database
+from passwordgenerator import pwgenerator
 
 # Import database models and schemas
 from database import (
@@ -23,6 +24,7 @@ from database import (
     SubmittedAssignment,
     UserCreate,
     TeacherCreate,
+    TeacherCreateResponse,
     AdminCreate,
     UserResponse,
     UserMeResponse,
@@ -224,26 +226,32 @@ async def register_admin(admin: AdminCreate, db: Session = Depends(get_db)):
     )
 
 
-@app.post("/auth/register/teacher", response_model=UserResponse)
+@app.post("/auth/register/teacher", response_model=TeacherCreateResponse)
 async def register_teacher(user: TeacherCreate, db: Session = Depends(get_db)):
     # Check if email already exists across all user tables
     if check_email_exists_across_all_tables(user.email, db):
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Generate a secure random password if not provided
+    password = user.password if user.password else pwgenerator.generate()
 
     db_teacher = Teacher(
         school_admin_id=user.school_admin_id,
         teacher_email=user.email,
         teacher_name=user.name,
         teacher_phone_number=user.phone_number,
-        teacher_password_hash=get_password_hash(user.password),
+        teacher_password_hash=get_password_hash(password),
         teacher_is_active=True,
     )
     db.add(db_teacher)
     db.commit()
     db.refresh(db_teacher)
 
-    return UserResponse(
-        id=db_teacher.teacher_id, email=db_teacher.teacher_email, name=db_teacher.teacher_name
+    return TeacherCreateResponse(
+        id=db_teacher.teacher_id, 
+        email=db_teacher.teacher_email, 
+        name=db_teacher.teacher_name,
+        generated_password=password
     )
 
 
