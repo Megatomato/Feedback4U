@@ -34,6 +34,11 @@ function ATable(props) {
                 <Row className="justify-content-center">
                   <strong>{row.course_description}</strong>
                 </Row>
+                <Row className="text-center">
+                  <small className="text-muted">
+                    Teacher: {row.teacher_name || 'Unknown'} ({row.teacher_email || 'No email'})
+                  </small>
+                </Row>
                 <Row>
                   <Button
                     variant="outline-primary"

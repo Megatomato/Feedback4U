@@ -120,6 +120,7 @@ export const teacherAPI = {
 // Admin API calls
 export const adminAPI = {
   getAll: () => api.get('/admins'),
+  getSchoolStatistics: () => api.get('/admin/statistics'), // Get statistics for admin's school
 };
 
 // Course API calls
@@ -138,6 +139,7 @@ export const courseAPI = {
     return api.post('/courses', payload);
   },
   getAll: () => api.get('/courses'),
+  getAdminSchoolCourses: () => api.get('/admin/courses'), // Get courses for admin's school only
   getById: (id) => api.get(`/courses/${id}`),
 };
 

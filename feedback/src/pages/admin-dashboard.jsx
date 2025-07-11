@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CourseCard } from '../components/Cards';
 import { StudentNav } from '../components/Navbar';
-import { courseAPI } from '../services/api';
+import { courseAPI, adminAPI } from '../services/api';
 
 import Card from "react-bootstrap/Card"
 import Button from "react-bootstrap/Button"
@@ -20,25 +20,33 @@ const AdminDashPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
+  const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
-        const coursesRes = await courseAPI.getAll();
-        console.log('Courses response:', coursesRes); // Debug log
-        // The API returns the courses array directly in coursesRes.data
+        // Fetch both courses and statistics for the admin's school
+        const [coursesRes, statisticsRes] = await Promise.all([
+          courseAPI.getAdminSchoolCourses(),
+          adminAPI.getSchoolStatistics()
+        ]);
+        
+        console.log('Admin school courses response:', coursesRes); // Debug log
+        console.log('Admin school statistics response:', statisticsRes); // Debug log
+        
         setCourses(coursesRes.data || []);
+        setStatistics(statisticsRes.data || {});
       } catch (err) {
-        console.error('Error fetching courses:', err);
+        console.error('Error fetching admin data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourses();
+    fetchData();
   }, []);
 
   const handleCourseClick = (courseId) => {
@@ -57,11 +65,11 @@ const AdminDashPage = () => {
         <Row>
           <Col>
             <Row>
-              <h1> UQ Overview </h1>
-              <h4> Total Courses - 123 </h4>
-              <h4> Total Teachers - 123 </h4>
-              <h4> Total Students - 123 </h4>
-              <h4> Average Submissions per Student - 2.3 </h4>
+              <h1>{statistics?.school_name || 'School'} Overview</h1>
+              <h4>Total Courses - {statistics?.total_courses || 0}</h4>
+              <h4>Total Teachers - {statistics?.total_teachers || 0}</h4>
+              <h4>Total Students - {statistics?.total_students || 0}</h4>
+              <h4>Average Submissions per Student - {statistics?.avg_submissions_per_student || 0}</h4>
             </Row>
           </Col>
           <Col>
@@ -82,7 +90,7 @@ const AdminDashPage = () => {
               padding: "10px"
             }}>
               <ATable
-                headers={["Course Code", "Teacher", "Students"]}
+                headers={["Course Code", "Description & Teacher", "Actions"]}
                 data={courses}
               />
             </Card>
