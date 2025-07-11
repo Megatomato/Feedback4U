@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         try {
           // Verify token is still valid
           const response = await authAPI.getCurrentUser();
+          console.log('Updated user data from /me endpoint:', response.data);
           setUser(response.data);
           setIsAuthenticated(true);
         } catch (error) {
@@ -101,11 +102,8 @@ export const AuthProvider = ({ children }) => {
   const getUserType = () => {
     if (!user) return null;
 
-    // Determine user type based on user object properties
-    if (user.admin_id) return 'admin';
-    if (user.teacher_id) return 'teacher';
-    if (user.student_id) return 'student';
-    return null;
+    // Use the standardized role field from the new /me endpoint response
+    return user.role || null;
   };
 
   const value = {
