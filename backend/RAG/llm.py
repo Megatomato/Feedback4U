@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from rag_db import topk_rubric, topk_assignment, Feedback
+from rag_db import topk_rubric, topk_reference_chunks, Feedback
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -88,7 +88,12 @@ class LLM:
 
 
 def generate_and_store_feedback(
-    student_id: str, assignment_id: str, course_id: str, qvec: list[float], provider: str = "openai"
+    student_id: str,
+    assignment_id: str,
+    course_id: str,
+    qvec: list[float],
+    essay_text: str,
+    provider: str = "openai",
 ):
     engine = create_engine(DB_URL)
     Session = sessionmaker(bind=engine)
@@ -96,19 +101,25 @@ def generate_and_store_feedback(
     with Session.begin() as session:
         # quick retrieval for instant feedback
         rubric_ctx = topk_rubric(session, course_id, qvec, k=4)
-        assign_ctx = topk_assignment(session, assignment_id, qvec, k=6)
+        exemplar_ctx = topk_reference_chunks(session, course_id, qvec, k=6)
 
     prompt_file_path = os.path.join(os.path.dirname(__file__), "SYSTEM_PROMPT.txt")
     with open(prompt_file_path, "r") as f:
         SYSTEM_PROMPT = f.read().strip()
 
     ctx_block = (
-        "[RUBRIC]\\n" + "\\n".join(rubric_ctx) + "\\n\\n[ASSIGNMENT]\\n" + "\\n".join(assign_ctx)
+        "[RUBRIC]\\n"
+        + "\\n".join(rubric_ctx)
+        + "\\n\\n[EXEMPLAR]\\n"
+        + "\\n".join(exemplar_ctx)
     )
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "assistant", "content": ctx_block},
-        {"role": "user", "content": "Provide holistic feedback and a mark out of 20."},
+        {
+            "role": "user",
+            "content": f"Provide holistic feedback and a mark out of 20 for the following essay:\\n\\n{essay_text}",
+        },
     ]
 
     llm = LLM(provider)
