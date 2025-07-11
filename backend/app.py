@@ -19,7 +19,7 @@ from database import (
     get_db, Admin, Teacher, Student, Course, Assignment, SubmittedAssignment,
     AdminCreate, AdminResponse, TeacherCreate, TeacherCreateResponse, 
     UserCreate, UserResponse, StudentCreateResponse, UserMeResponse,
-    StudentResponse, TeacherResponse, CourseCreate, CourseResponse, 
+    StudentResponse, TeacherResponse, CourseCreate, CourseResponse, CourseWithTeacherResponse,
     AssignmentCreate, AssignmentResponse, SubmissionResponse, Token,
     create_cross_table_email_uniqueness_triggers
 )
@@ -332,6 +332,45 @@ async def get_admins(current_user=Depends(get_current_user), db: Session = Depen
     return admins
 
 
+@app.get("/admin/statistics")
+async def get_admin_school_statistics(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get statistics for the admin's school"""
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can access school statistics")
+    
+    admin_id = current_user.admin_id
+    
+    # Count teachers in this school
+    total_teachers = db.query(Teacher).filter(Teacher.school_admin_id == admin_id).count()
+    
+    # Count students in this school
+    total_students = db.query(Student).filter(Student.school_admin_id == admin_id).count()
+    
+    # Count courses taught by teachers in this school
+    teacher_ids = db.query(Teacher.teacher_id).filter(Teacher.school_admin_id == admin_id).subquery()
+    total_courses = db.query(Course).filter(Course.course_teacher_id.in_(teacher_ids)).count()
+    
+    # Calculate average submissions per student (if submission data exists)
+    try:
+        # Get students in this school
+        students_in_school = db.query(Student.student_id).filter(Student.school_admin_id == admin_id).subquery()
+        total_submissions = db.query(SubmittedAssignment).filter(
+            SubmittedAssignment.submitted_assignment_student_id.in_(students_in_school)
+        ).count()
+        
+        avg_submissions_per_student = round(total_submissions / total_students, 1) if total_students > 0 else 0
+    except:
+        avg_submissions_per_student = 0
+    
+    return {
+        "school_name": current_user.school_name,
+        "total_courses": total_courses,
+        "total_teachers": total_teachers,
+        "total_students": total_students,
+        "avg_submissions_per_student": avg_submissions_per_student
+    }
+
+
 @app.get("/me", response_model=UserMeResponse)
 async def get_current_user_info(current_user=Depends(get_current_user)):
     # Normalize the user data based on user type
@@ -388,6 +427,36 @@ def create_course(
 @app.get("/courses", response_model=List[CourseResponse])
 def get_all_courses(db: Session = Depends(get_db)):
     return db.query(Course).all()
+
+
+@app.get("/admin/courses", response_model=List[CourseWithTeacherResponse])
+def get_admin_school_courses(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all courses for the admin's school with teacher information"""
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can access school courses")
+    
+    # Join courses with teachers to get teacher info, filtered by school
+    courses_with_teachers = (
+        db.query(Course, Teacher)
+        .join(Teacher, Course.course_teacher_id == Teacher.teacher_id)
+        .filter(Teacher.school_admin_id == current_user.admin_id)
+        .all()
+    )
+    
+    # Transform the result into CourseWithTeacherResponse format
+    result = []
+    for course, teacher in courses_with_teachers:
+        result.append(CourseWithTeacherResponse(
+            course_id=course.course_id,
+            course_name=course.course_name,
+            course_description=course.course_description,
+            course_is_active=course.course_is_active,
+            course_teacher_id=course.course_teacher_id,
+            teacher_name=teacher.teacher_name,
+            teacher_email=teacher.teacher_email
+        ))
+    
+    return result
 
 
 @app.get("/courses/{course_id}", response_model=CourseResponse)

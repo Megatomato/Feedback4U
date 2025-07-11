@@ -230,6 +230,19 @@ class CourseResponse(BaseModel):
         from_attributes = True
 
 
+class CourseWithTeacherResponse(BaseModel):
+    course_id: int
+    course_name: str
+    course_description: str
+    course_is_active: bool
+    course_teacher_id: int
+    teacher_name: str
+    teacher_email: str
+
+    class Config:
+        from_attributes = True
+
+
 class AssignmentCreate(BaseModel):
     assignment_name: str
     assignment_description: str
