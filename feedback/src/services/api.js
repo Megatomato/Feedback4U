@@ -131,6 +131,7 @@ export const adminAPI = {
 // Enrollment API calls
 export const enrollmentAPI = {
   create: (data) => api.post('/enrollments', data),
+  createBySchoolId: (data) => api.post('/admin/enrollments', data),
   getAll: () => api.get('/enrollments'),
   drop: (studentId, courseId) => api.delete(`/enrollments/${studentId}/${courseId}`),
 };

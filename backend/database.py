@@ -290,6 +290,11 @@ class EnrollmentCreate(BaseModel):
     course_id: int
 
 
+class EnrollmentCreateBySchoolId(BaseModel):
+    school_student_id: int
+    course_id: int
+
+
 class EnrollmentResponse(BaseModel):
     enrollment_id: int
     student_id: int

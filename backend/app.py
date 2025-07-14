@@ -41,6 +41,7 @@ from database import (
     CourseWithStatsResponse,
     StudentCourseResponse,
     EnrollmentCreate,
+    EnrollmentCreateBySchoolId,
     EnrollmentResponse,
     AssignmentCreate,
     AssignmentResponse,
@@ -845,6 +846,67 @@ def create_enrollment(
 
     # Create new enrollment
     db_enrollment = Enrollment(student_id=enrollment.student_id, course_id=enrollment.course_id)
+
+    db.add(db_enrollment)
+    db.commit()
+    db.refresh(db_enrollment)
+    return db_enrollment
+
+
+@app.post("/admin/enrollments", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
+def create_enrollment_by_school_id(
+    enrollment: EnrollmentCreateBySchoolId,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Enroll a student in a course by school student ID (admin only)"""
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can use this enrollment method")
+
+    # Find student by school_student_id and admin_id
+    student = (
+        db.query(Student)
+        .filter(
+            Student.school_student_id == enrollment.school_student_id,
+            Student.school_admin_id == current_user.admin_id
+        )
+        .first()
+    )
+    
+    if not student:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Student with school ID {enrollment.school_student_id} not found in your school"
+        )
+
+    # Check if course exists and belongs to the same school
+    course = db.query(Course).filter(Course.course_id == enrollment.course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Verify course belongs to the same school
+    course_teacher = db.query(Teacher).filter(Teacher.teacher_id == course.course_teacher_id).first()
+    if not course_teacher or course_teacher.school_admin_id != current_user.admin_id:
+        raise HTTPException(status_code=403, detail="Course does not belong to your school")
+
+    # Check if enrollment already exists
+    existing_enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.student_id == student.student_id,
+            Enrollment.course_id == enrollment.course_id,
+        )
+        .first()
+    )
+
+    if existing_enrollment:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Student {student.student_name} is already enrolled in this course"
+        )
+
+    # Create new enrollment
+    db_enrollment = Enrollment(student_id=student.student_id, course_id=enrollment.course_id)
 
     db.add(db_enrollment)
     db.commit()

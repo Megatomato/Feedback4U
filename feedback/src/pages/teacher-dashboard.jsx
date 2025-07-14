@@ -42,7 +42,7 @@ const TeacherDashboard = () => {
         // Fetch assignments for each course for assignment modal (only if we have courses)
         if (coursesData.length > 0) {
           const assignmentsPromises = coursesData.map(c => assignmentAPI.getForCourse(c.course_id));
-          const assignmentsByCourse = await Promise.all(assignmentsPromises);
+        const assignmentsByCourse = await Promise.all(assignmentsPromises);
           setAssignments(assignmentsByCourse.flatMap(res => res.data || []));
         } else {
           setAssignments([]);
@@ -223,32 +223,32 @@ const TeacherDashboard = () => {
             </Card.Header>
             <Card.Body>
               {statistics ? (
-                <Row>
-                  <Col md={3}>
-                    <div className="text-center">
+              <Row>
+                <Col md={3}>
+                  <div className="text-center">
                       <h3 className="text-primary">{statistics.total_courses}</h3>
-                      <p className="text-muted mb-0">Total Courses</p>
-                    </div>
-                  </Col>
-                  <Col md={3}>
-                    <div className="text-center">
+                    <p className="text-muted mb-0">Total Courses</p>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="text-center">
                       <h3 className="text-primary">{statistics.total_assignments}</h3>
-                      <p className="text-muted mb-0">Total Assignments</p>
-                    </div>
-                  </Col>
-                  <Col md={3}>
-                    <div className="text-center">
+                    <p className="text-muted mb-0">Total Assignments</p>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="text-center">
                       <h3 className="text-primary">{statistics.total_submissions}</h3>
                       <p className="text-muted mb-0">Total Submissions</p>
-                    </div>
-                  </Col>
-                  <Col md={3}>
-                    <div className="text-center">
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="text-center">
                       <h3 className="text-primary">{statistics.school_name}</h3>
                       <p className="text-muted mb-0">School</p>
-                    </div>
-                  </Col>
-                </Row>
+                  </div>
+                </Col>
+              </Row>
               ) : (
                 <div className="text-center text-muted">Loading statistics...</div>
               )}
