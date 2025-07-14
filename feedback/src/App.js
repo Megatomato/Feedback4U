@@ -19,6 +19,7 @@ import ContactPage from './pages/contact';
 import CatPage from './pages/cat';
 
 import ProtectedRoute from './components/ProtectedRoute';
+import { AdminProvider } from './context/AdminProviders';
 
 function App() {
   return (
@@ -34,10 +35,10 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/courses" element={<ProtectedRoute><CoursesPage /></ProtectedRoute>} />
-            <Route path="/course/:id" element={<ProtectedRoute><CoursePage /></ProtectedRoute>} />
-            <Route path="/assignment/:id" element={<ProtectedRoute><AssignmentDetailsPage /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><AdminProvider><Dashboard /></AdminProvider></ProtectedRoute>} />
+            <Route path="/courses" element={<ProtectedRoute><AdminProvider><CoursesPage /></AdminProvider></ProtectedRoute>} />
+            <Route path="/course/:id" element={<ProtectedRoute><AdminProvider><CoursePage /></AdminProvider></ProtectedRoute>} />
+            <Route path="/assignment/:id" element={<ProtectedRoute><AdminProvider><AssignmentDetailsPage /></AdminProvider></ProtectedRoute>} />
 
             {/* Other routes */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

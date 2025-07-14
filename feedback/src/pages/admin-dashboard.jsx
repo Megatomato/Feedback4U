@@ -32,10 +32,10 @@ const AdminDashPage = () => {
           courseAPI.getAdminSchoolCourses(),
           adminAPI.getSchoolStatistics()
         ]);
-        
+
         console.log('Admin school courses response:', coursesRes); // Debug log
         console.log('Admin school statistics response:', statisticsRes); // Debug log
-        
+
         setCourses(coursesRes.data || []);
         setStatistics(statisticsRes.data || {});
       } catch (err) {
@@ -85,16 +85,10 @@ const AdminDashPage = () => {
                 />
               </Col>
             </Row>
-            <Card style={{
-              maxHeight: "750px",
-              overflowY: "auto",
-              padding: "10px"
-            }}>
               <ATable
                 headers={["Course Code", "Description & Teacher", "Actions"]}
                 data={courses}
               />
-            </Card>
           </Col>
         </Row>
         </Container>
@@ -113,7 +107,7 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
       <Card>
         <Card.Body>
           <Card.Title>
-            Management Tools
+            <h1>Management Tools</h1>
           </Card.Title>
           <Card.Text>
             <ButtonGroup vertical className="w-100">
@@ -135,7 +129,7 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
               <Button variant="outline-primary" onClick={() => handleShow('editCourse')} className="mb-2">
                 Edit Course Information
               </Button>
-              <Button variant="success" onClick={() => handleShow('enrollStudent')} className="mb-2">
+              <Button variant="primary" onClick={() => handleShow('enrollStudent')} className="mb-2">
                 Enroll Student in Course
               </Button>
             </ButtonGroup>

@@ -52,7 +52,7 @@ const TeacherDashboard = () => {
         console.error("Failed to fetch data", error);
         console.error("Error details:", error.response?.data || error.message);
         setError("Failed to load dashboard data. Please try again.");
-        
+
         // Set safe defaults on error
         setCourses([]);
         setStatistics(null);
@@ -72,13 +72,13 @@ const TeacherDashboard = () => {
         assignment_due_date: formData.dueDate,
         assignment_course_id: Number(formData.courseId),
       });
-      
+
       // Refresh both courses (to update assignment counts) and assignments
       const [coursesRes, assignmentsRes] = await Promise.all([
         teacherAPI.getCourses(),
         assignmentAPI.getForCourse(formData.courseId)
       ]);
-      
+
       setCourses(coursesRes.data || []);
       const newAssignments = assignments.filter(a => a.assignment_course_id !== Number(formData.courseId)).concat(assignmentsRes.data || []);
       setAssignments(newAssignments);
@@ -139,9 +139,6 @@ const TeacherDashboard = () => {
                 'Manage assignments and track student progress'
               )}
             </p>
-            {statistics && statistics.teacher_email && (
-              <small className="text-muted">{statistics.teacher_email}</small>
-            )}
           </Col>
           <Col md={4} className="text-end">
             <Button
@@ -181,7 +178,18 @@ const TeacherDashboard = () => {
                 <Row>
                   {courses.map((course) => (
                     <Col md={6} lg={4} key={course.course_id} className="mb-3">
-                      <div className="border rounded p-3 h-100">
+                      <div
+                        className="border rounded p-3 h-100 clickable-card"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => navigate(`/course/${course.course_id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            navigate(`/course/${course.course_id}`);
+                          }
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
                         <h6 className="text-primary">{course.course_name}</h6>
                         <div className="small text-muted mb-2">
                           {course.course_description}
@@ -224,28 +232,22 @@ const TeacherDashboard = () => {
             <Card.Body>
               {statistics ? (
                 <Row>
-                  <Col md={3}>
+                  <Col md={4}>
                     <div className="text-center">
                       <h3 className="text-primary">{statistics.total_courses}</h3>
                       <p className="text-muted mb-0">Total Courses</p>
                     </div>
                   </Col>
-                  <Col md={3}>
+                  <Col md={4}>
                     <div className="text-center">
                       <h3 className="text-primary">{statistics.total_assignments}</h3>
                       <p className="text-muted mb-0">Total Assignments</p>
                     </div>
                   </Col>
-                  <Col md={3}>
+                  <Col md={4}>
                     <div className="text-center">
                       <h3 className="text-primary">{statistics.total_submissions}</h3>
                       <p className="text-muted mb-0">Total Submissions</p>
-                    </div>
-                  </Col>
-                  <Col md={3}>
-                    <div className="text-center">
-                      <h3 className="text-primary">{statistics.school_name}</h3>
-                      <p className="text-muted mb-0">School</p>
                     </div>
                   </Col>
                 </Row>

@@ -113,7 +113,7 @@ const AssignmentDetailsPage = () => {
                 <h5>Description</h5>
                 <p>{assignment.assignment_description}</p>
               </div>
-              
+
               {!submission ? (
                 <Form onSubmit={handleFormSubmit}>
                   <Form.Group controlId="formFile" className="mb-3">
@@ -160,16 +160,16 @@ const AssignmentDetailsPage = () => {
             </Card.Header>
             <Card.Body>
               <div className="mb-3">
-                <h6>Course Information</h6>
+                <h5>Course Information</h5>
                 <p className="mb-1">{course?.course_name}</p>
                 <p className="text-muted small">{course?.course_description}</p>
-                <p className="mb-1"><strong>Instructor:</strong> {course?.instructor || 'N/A'}</p>
-                <p className="mb-1"><strong>Code:</strong> {course?.code || 'N/A'}</p>
+                <p className="mb-1"><strong>Instructor:</strong> {course?.course_teacher_id || 'N/A'}</p>
+                <p className="mb-1"><strong>Code:</strong> {course?.course_name || 'N/A'}</p>
                 <p className="mb-0"><strong>Students:</strong> {course?.students || 'N/A'}</p>
               </div>
 
               <div>
-                <h6>Submission Stats</h6>
+                <h5>Submission Stats</h5>
                 <p className="mb-1">
                   <strong>Submitted:</strong> {assignment.submissionCount || 0}/{assignment.totalStudents || 0}
                 </p>

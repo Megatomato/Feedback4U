@@ -10,7 +10,7 @@ import { studentAPI } from '../services/api';
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   // State for real API data
   const [courses, setCourses] = useState([]);
   const [statistics, setStatistics] = useState(null);
@@ -42,7 +42,7 @@ const StudentDashboard = () => {
         console.error("Failed to fetch student data", error);
         console.error("Error details:", error.response?.data || error.message);
         setError("Failed to load dashboard data. Please try again.");
-        
+
         // Set safe defaults on error
         setCourses([]);
         setStatistics(null);
@@ -182,10 +182,10 @@ const StudentDashboard = () => {
                 {courses && courses.length > 0 ? (
                   courses.map(course => {
                     // Calculate progress based on submitted vs total assignments
-                    const progressRate = course.total_assignments > 0 
-                      ? Math.round((course.submitted_assignments / course.total_assignments) * 100) 
+                    const progressRate = course.total_assignments > 0
+                      ? Math.round((course.submitted_assignments / course.total_assignments) * 100)
                       : 0;
-                    
+
                     return (
                       <div
                         key={course.course_id}
