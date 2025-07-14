@@ -100,8 +100,8 @@ def generate_and_store_feedback(
 
     with Session.begin() as session:
         # quick retrieval for instant feedback
-        rubric_ctx = topk_rubric(session, course_id, qvec, k=4)
-        exemplar_ctx = topk_reference_chunks(session, course_id, qvec, k=6)
+        rubric_ctx = topk_rubric(session, assignment_id, qvec, k=4)
+        exemplar_ctx = topk_reference_chunks(session, assignment_id, qvec, k=6)
 
     prompt_file_path = os.path.join(os.path.dirname(__file__), "SYSTEM_PROMPT.txt")
     with open(prompt_file_path, "r") as f:

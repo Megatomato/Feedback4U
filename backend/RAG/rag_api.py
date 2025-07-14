@@ -56,7 +56,7 @@ async def health_check(db: Session = Depends(get_db)):
 @app.post("/upload-reference/", summary="Upload a reference document")
 async def upload_reference(
     file: UploadFile = File(..., description="The reference PDF file (e.g., rubric, exemplar)."),
-    course_id: str = Form(..., description="Course ID, e.g. 'MATH101'."),
+    assignment_id: str = Form(..., description="Assignment ID, e.g. 'A1'."),
     doc_type: str = Form(..., description="Type of document (e.g., 'rubric', 'exemplar')."),
     chunker: str = Form(
         "recursive", enum=["recursive", "semantic"], description="Chunking strategy."
@@ -75,10 +75,10 @@ async def upload_reference(
             tmp.write(await file.read())
             tmp_path = tmp.name
 
-        logging.info(f"Processing reference file: {file.filename} for course {course_id}")
+        logging.info(f"Processing reference file: {file.filename} for assignment {assignment_id}")
         ingest_reference_file(
             file_path=tmp_path,
-            course_id=course_id,
+            assignment_id=assignment_id,
             doc_type=doc_type,
             chunker=chunker,
             embedder_name=embedder,
@@ -93,7 +93,7 @@ async def upload_reference(
             os.remove(tmp_path)
 
     return {
-        "message": f"Reference document '{file.filename}' uploaded successfully for course '{course_id}'."
+        "message": f"Reference document '{file.filename}' uploaded successfully for assignment '{assignment_id}'."
     }
 
 

@@ -17,7 +17,7 @@ def handle_upload_reference(args):
     logging.info("Starting reference file ingestion...")
     ingest_reference_file(
         file_path=args.file,
-        course_id=args.course,
+        assignment_id=args.assignment,
         doc_type=args.doctype,
         chunker=args.chunker,
         embedder_name=args.embedder,
@@ -34,7 +34,7 @@ def main():
         "upload-reference", help="Upload a reference document (e.g., rubric, exemplar)."
     )
     parser_upload.add_argument("--file", required=True, help="Path to the reference PDF file.")
-    parser_upload.add_argument("--course", required=True, help="Course ID, e.g. 'MATH101'.")
+    parser_upload.add_argument("--assignment", required=True, help="Assignment ID, e.g. 'A1'.")
     parser_upload.add_argument(
         "--doctype", required=True, help="Type of document (e.g., 'rubric', 'exemplar')."
     )

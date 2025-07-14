@@ -58,7 +58,7 @@ Base = declarative_base(metadata=MetaData())
 class ReferenceChunk(Base):
     __tablename__ = "reference_chunks"
     id = Column(BigInteger, primary_key=True)
-    course_id = Column(Text, nullable=False)
+    assignment_id = Column(Text, nullable=False)
     doc_type = Column(Text, nullable=False)
     heading_path = Column(Text)
     content = Column(Text, nullable=False)
@@ -318,38 +318,38 @@ def clean_chunks(chunks: List[str]) -> List[str]:
 # ---------------------------------------------------------------------
 
 
-def topk_reference_chunks(session, course_id: str, query_vec: List[float], k: int = 6):
+def topk_reference_chunks(session, assignment_id: str, query_vec: List[float], k: int = 6):
     stmt = sqltext(
         """
         SELECT content
         FROM   reference_chunks
-        WHERE  course_id = :cid
+        WHERE  assignment_id = :aid
         ORDER  BY embedding <-> CAST(:qvec AS VECTOR)
         LIMIT  :limit;
         """
     )
     rows = session.execute(
-        stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}
+        stmt, {"aid": assignment_id, "qvec": str(query_vec), "limit": k}
     ).fetchall()
     return [r[0] for r in rows]
 
 
-def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4, doc_type: str = "rubric"):
+def topk_rubric(session, assignment_id: str, query_vec: List[float], k: int = 4, doc_type: str = "rubric"):
     stmt = sqltext(
         """
         SELECT content
         FROM   reference_chunks
-        WHERE  course_id = :cid AND doc_type = :dtype
+        WHERE  assignment_id = :aid AND doc_type = :dtype
         ORDER  BY embedding <-> CAST(:qvec AS VECTOR)
         LIMIT  :limit;
         """
     )
-    rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k, "dtype": doc_type}).fetchall()
+    rows = session.execute(stmt, {"aid": assignment_id, "qvec": str(query_vec), "limit": k, "dtype": doc_type}).fetchall()
     return [r[0] for r in rows]
 
 
 def ingest_reference_file(
-    file_path: str, course_id: str, doc_type: str, chunker: str, embedder_name: str
+    file_path: str, assignment_id: str, doc_type: str, chunker: str, embedder_name: str
 ):
     # -- setup DB session
     engine = create_engine(DB_URL)
@@ -374,7 +374,7 @@ def ingest_reference_file(
     vectors = embedder.embed(chunks)
 
     objects = [
-        ReferenceChunk(course_id=course_id, doc_type=doc_type, content=txt, embedding=vec)
+        ReferenceChunk(assignment_id=assignment_id, doc_type=doc_type, content=txt, embedding=vec)
         for txt, vec in zip(chunks, vectors)
     ]
 
