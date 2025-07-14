@@ -42,7 +42,7 @@ const TeacherDashboard = () => {
         // Fetch assignments for each course for assignment modal (only if we have courses)
         if (coursesData.length > 0) {
           const assignmentsPromises = coursesData.map(c => assignmentAPI.getForCourse(c.course_id));
-          const assignmentsByCourse = await Promise.all(assignmentsPromises);
+        const assignmentsByCourse = await Promise.all(assignmentsPromises);
           setAssignments(assignmentsByCourse.flatMap(res => res.data || []));
         } else {
           setAssignments([]);

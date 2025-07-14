@@ -32,13 +32,9 @@ const CoursePage = () => {
   if (!course) {
     return (
       <Container className="py-4">
-        <div className="alert alert-danger">
-          <h4>Course not found</h4>
-          <p>The course you're looking for doesn't exist.</p>
           <Button onClick={() => navigate('/dashboard')}>
             Back to Dashboard
           </Button>
-        </div>
       </Container>
     );
   }
@@ -56,14 +52,16 @@ const CoursePage = () => {
     <Container className="my-4">
       <div className="d-flex align-items-center mb-4">
         <Button variant="outline-secondary" onClick={() => navigate(-1)} className="me-3">
-          <i className="bi bi-arrow-left"></i>
+          <i className="bi bi-arrow-left">
+            Back to Dashboard
+          </i>
         </Button>
         <div>
           <h1 className="mb-0">{course.course_name}</h1>
           <p className="text-muted mb-0">{course.course_description}</p>
         </div>
       </div>
-      
+
       <Row>
         <Col lg={8}>
           <Card>

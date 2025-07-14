@@ -118,6 +118,11 @@ class TeacherAnalytic(Base):
 
 def get_db_session():
     engine = create_engine(DB_URL)
+    from sqlalchemy import text
+
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.commit()
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     return Session()
@@ -328,13 +333,13 @@ def topk_reference_chunks(session, course_id: str, query_vec: List[float], k: in
         LIMIT  :limit;
         """
     )
-    rows = session.execute(
-        stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}
-    ).fetchall()
+    rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k}).fetchall()
     return [r[0] for r in rows]
 
 
-def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4, doc_type: str = "rubric"):
+def topk_rubric(
+    session, course_id: str, query_vec: List[float], k: int = 4, doc_type: str = "rubric"
+):
     stmt = sqltext(
         """
         SELECT content
@@ -344,7 +349,9 @@ def topk_rubric(session, course_id: str, query_vec: List[float], k: int = 4, doc
         LIMIT  :limit;
         """
     )
-    rows = session.execute(stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k, "dtype": doc_type}).fetchall()
+    rows = session.execute(
+        stmt, {"cid": course_id, "qvec": str(query_vec), "limit": k, "dtype": doc_type}
+    ).fetchall()
     return [r[0] for r in rows]
 
 

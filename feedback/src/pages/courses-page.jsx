@@ -55,11 +55,11 @@ const CoursesPage = () => {
           {courses && courses.length > 0 ? (
             courses.map(course => (
               <Col key={course.course_id || course.id} lg={3} md={6} className="mb-4">
-                <CourseCard
-                  course={course}
-                  userRole={user.role}
+              <CourseCard
+                course={course}
+                userRole={user.role}
                   onClick={() => handleCourseClick(course.course_id || course.id)}
-                />
+              />
               </Col>
             ))
           ) : (

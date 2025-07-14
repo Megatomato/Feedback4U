@@ -56,7 +56,7 @@ function AddStudentForm() {
     setIsSubmitting(true);
 
     try {
-            console.log('Form submitted:', formData);
+      console.log('Form submitted:', formData);
       const result = await authAPI.registerStudent(formData);
 
       if (result.data) {
@@ -563,32 +563,27 @@ const AssignmentModal = ({ show, onHide, onSubmit, courses = [] }) => {
 
 function EnrollStudentForm() {
   const [formData, setFormData] = useState({
-    student_id: "",
+    school_student_id: "",
     course_id: ""
   });
 
   const [validated, setValidated] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch students and courses when component mounts
+  // Fetch courses when component mounts
   const { user } = useAuth();
   const adminId = useAdminId();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [studentsRes, coursesRes] = await Promise.all([
-          studentAPI.getAll(),
-          courseAPI.getAdminSchoolCourses()
-        ]);
-        setStudents(studentsRes.data || []);
+        const coursesRes = await courseAPI.getAdminSchoolCourses();
         setCourses(coursesRes.data || []);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching courses:', error);
       } finally {
         setLoading(false);
       }
@@ -601,13 +596,13 @@ function EnrollStudentForm() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: parseInt(value) || value
+      [name]: name === 'course_id' ? parseInt(value) || value : value
     }));
   };
 
   const handleReset = () => {
     setFormData({
-      student_id: "",
+      school_student_id: "",
       course_id: ""
     });
     setValidated(false);
@@ -629,9 +624,8 @@ function EnrollStudentForm() {
 
     try {
       console.log('Enrollment form submitted:', formData);
-      const result = await enrollmentAPI.create({
-        admin_id: adminId,
-        school_student_id: parseInt(formData.student_id),
+      const result = await enrollmentAPI.createBySchoolId({
+        school_student_id: parseInt(formData.school_student_id),
         course_id: parseInt(formData.course_id)
       });
 
@@ -648,7 +642,7 @@ function EnrollStudentForm() {
   };
 
   if (loading) {
-    return <div>Loading students and courses...</div>;
+    return <div>Loading courses...</div>;
   }
 
   return (
@@ -662,17 +656,23 @@ function EnrollStudentForm() {
       ) : (
         <>
           <Form noValidate validated={validated} onSubmit={handleSubmit}>
-            <Form.Group controlId="student_id" className="mb-3">
-              <Form.Label>Select Student</Form.Label>
+            <Form.Group controlId="school_student_id" className="mb-3">
+              <Form.Label>Student School ID</Form.Label>
               <Form.Control
-                as="textarea"
-                rows={1}
-                name="student_id"
-                value={formData.student_id}
-                onChange={handleChange}
+                type="number"
                 required
-                placeholder="Enter student ID"
+                name="school_student_id"
+                value={formData.school_student_id}
+                onChange={handleChange}
+                placeholder="Enter student's school ID..."
+                min="1"
               />
+              <Form.Control.Feedback type="invalid">
+                Please enter a valid student school ID.
+              </Form.Control.Feedback>
+              <Form.Text className="text-muted">
+                Enter the student's unique school ID number (not their email or name).
+              </Form.Text>
             </Form.Group>
 
             <Form.Group controlId="course_id" className="mb-3">

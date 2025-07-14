@@ -41,9 +41,11 @@ from database import (
     CourseWithStatsResponse,
     StudentCourseResponse,
     EnrollmentCreate,
+    EnrollmentCreateBySchoolId,
     EnrollmentResponse,
     AssignmentCreate,
     AssignmentResponse,
+    AssignmentWithCourseResponse,
     SubmissionResponse,
     Token,
     create_cross_table_email_uniqueness_triggers,
@@ -377,6 +379,15 @@ async def get_students(current_user=Depends(get_current_user), db: Session = Dep
 async def get_teachers(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     teachers = db.query(Teacher).all()
     return teachers
+
+
+@app.get("/teachers/{teacher_id}", response_model=TeacherResponse)
+def get_teacher(teacher_id: int, db: Session = Depends(get_db)):
+    """Get teacher information by teacher_id"""
+    teacher = db.query(Teacher).filter(Teacher.teacher_id == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    return teacher
 
 
 @app.get("/admins", response_model=List[AdminResponse])
@@ -851,6 +862,67 @@ def create_enrollment(
     return db_enrollment
 
 
+@app.post("/admin/enrollments", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
+def create_enrollment_by_school_id(
+    enrollment: EnrollmentCreateBySchoolId,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Enroll a student in a course by school student ID (admin only)"""
+    if not isinstance(current_user, Admin):
+        raise HTTPException(status_code=403, detail="Only admins can use this enrollment method")
+
+    # Find student by school_student_id and admin_id
+    student = (
+        db.query(Student)
+        .filter(
+            Student.school_student_id == enrollment.school_student_id,
+            Student.school_admin_id == current_user.admin_id
+        )
+        .first()
+    )
+    
+    if not student:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Student with school ID {enrollment.school_student_id} not found in your school"
+        )
+
+    # Check if course exists and belongs to the same school
+    course = db.query(Course).filter(Course.course_id == enrollment.course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Verify course belongs to the same school
+    course_teacher = db.query(Teacher).filter(Teacher.teacher_id == course.course_teacher_id).first()
+    if not course_teacher or course_teacher.school_admin_id != current_user.admin_id:
+        raise HTTPException(status_code=403, detail="Course does not belong to your school")
+
+    # Check if enrollment already exists
+    existing_enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.student_id == student.student_id,
+            Enrollment.course_id == enrollment.course_id,
+        )
+        .first()
+    )
+
+    if existing_enrollment:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Student {student.student_name} is already enrolled in this course"
+        )
+
+    # Create new enrollment
+    db_enrollment = Enrollment(student_id=student.student_id, course_id=enrollment.course_id)
+
+    db.add(db_enrollment)
+    db.commit()
+    db.refresh(db_enrollment)
+    return db_enrollment
+
+
 @app.get("/enrollments", response_model=List[EnrollmentResponse])
 def get_enrollments(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Get all enrollments (admin only)"""
@@ -939,6 +1011,71 @@ def get_assignment(assignment_id: int, db: Session = Depends(get_db)):
 def get_assignments_for_course(course_id: int, db: Session = Depends(get_db)):
     assignments = db.query(Assignment).filter(Assignment.assignment_course_id == course_id).all()
     return assignments
+
+
+@app.get("/student/assignments/due-soon", response_model=List[AssignmentWithCourseResponse])
+def get_student_assignments_due_soon(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the top 3 upcoming assignments due for the current student"""
+    if not isinstance(current_user, Student):
+        raise HTTPException(status_code=403, detail="Only students can access their assignments")
+
+    student_id = current_user.student_id
+    
+    # Get current time
+    now = datetime.utcnow()
+    
+    # Get all course IDs the student is enrolled in
+    enrolled_course_ids = (
+        db.query(Enrollment.course_id)
+        .filter(Enrollment.student_id == student_id)
+        .subquery()
+    )
+    
+    # Get the top 3 upcoming assignments in enrolled courses
+    assignments_query = (
+        db.query(Assignment, Course)
+        .join(Course, Assignment.assignment_course_id == Course.course_id)
+        .filter(
+            Assignment.assignment_course_id.in_(enrolled_course_ids),
+            Assignment.assignment_due_date >= now,
+            Assignment.assignment_status == "active"
+        )
+        .order_by(Assignment.assignment_due_date)
+        .limit(3)
+    )
+    
+    assignments_with_courses = assignments_query.all()
+    
+    # Check which assignments have been submitted
+    result = []
+    for assignment, course in assignments_with_courses:
+        # Check if student has submitted this assignment
+        submission = (
+            db.query(SubmittedAssignment)
+            .filter(
+                SubmittedAssignment.submitted_assignment_student_id == student_id,
+                SubmittedAssignment.submitted_assignment_assignment_id == assignment.assignment_id
+            )
+            .first()
+        )
+        
+        result.append(
+            AssignmentWithCourseResponse(
+                assignment_id=assignment.assignment_id,
+                assignment_name=assignment.assignment_name,
+                assignment_description=assignment.assignment_description,
+                assignment_due_date=assignment.assignment_due_date,
+                assignment_status=assignment.assignment_status,
+                assignment_course_id=assignment.assignment_course_id,
+                course_name=course.course_name,
+                is_submitted=submission is not None
+            )
+        )
+    
+    return result
 
 
 @app.post("/assignments/{assignment_id}/submit", response_model=SubmissionResponse)

@@ -290,6 +290,11 @@ class EnrollmentCreate(BaseModel):
     course_id: int
 
 
+class EnrollmentCreateBySchoolId(BaseModel):
+    school_student_id: int
+    course_id: int
+
+
 class EnrollmentResponse(BaseModel):
     enrollment_id: int
     student_id: int
@@ -314,6 +319,20 @@ class AssignmentResponse(BaseModel):
     assignment_due_date: datetime
     assignment_status: str
     assignment_course_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class AssignmentWithCourseResponse(BaseModel):
+    assignment_id: int
+    assignment_name: str
+    assignment_description: str
+    assignment_due_date: datetime
+    assignment_status: str
+    assignment_course_id: int
+    course_name: str
+    is_submitted: bool = False
 
     class Config:
         from_attributes = True
