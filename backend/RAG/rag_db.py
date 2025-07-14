@@ -339,7 +339,9 @@ def topk_reference_chunks(session, assignment_id: str, query_vec: List[float], k
     return [r[0] for r in rows]
 
 
-def topk_rubric(session, assignment_id: str, query_vec: List[float], k: int = 4, doc_type: str = "rubric"):
+def topk_rubric(
+    session, assignment_id: str, query_vec: List[float], k: int = 4, doc_type: str = "rubric"
+):
     stmt = sqltext(
         """
         SELECT content
@@ -349,7 +351,9 @@ def topk_rubric(session, assignment_id: str, query_vec: List[float], k: int = 4,
         LIMIT  :limit;
         """
     )
-    rows = session.execute(stmt, {"aid": assignment_id, "qvec": str(query_vec), "limit": k, "dtype": doc_type}).fetchall()
+    rows = session.execute(
+        stmt, {"aid": assignment_id, "qvec": str(query_vec), "limit": k, "dtype": doc_type}
+    ).fetchall()
     return [r[0] for r in rows]
 
 

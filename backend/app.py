@@ -210,10 +210,10 @@ async def health_check(db: Session = Depends(get_db)):
         )
 
 
-@app.post("/upload-reference/", summary="Upload a reference document")
+@app.post("/upload-reference/{assignment_id}", summary="Upload a reference document")
 async def upload_reference(
+    assignment_id: int,
     file: UploadFile = File(..., description="The reference PDF file (e.g., rubric, exemplar)."),
-    assignment_id: str = Form(..., description="Assignment ID, e.g. 'A1'."),
     doc_type: str = Form("rubric", description="Type of document (e.g., 'rubric', 'exemplar')."),
     chunker: str = Form(
         "recursive", enum=["recursive", "semantic"], description="Chunking strategy."
@@ -681,17 +681,19 @@ def create_course(
     # Find teacher by email
     teacher = db.query(Teacher).filter(Teacher.teacher_email == course.teacher_email).first()
     if not teacher:
-        raise HTTPException(status_code=404, detail=f"Teacher with email {course.teacher_email} not found")
-    
+        raise HTTPException(
+            status_code=404, detail=f"Teacher with email {course.teacher_email} not found"
+        )
+
     # Verify teacher belongs to the same school as admin
     if teacher.school_admin_id != current_user.admin_id:
         raise HTTPException(status_code=403, detail="Teacher does not belong to your school")
 
     # Create course with teacher_id from the found teacher
     course_data = course.model_dump()
-    course_data.pop('teacher_email')  # Remove teacher_email
-    course_data['course_teacher_id'] = teacher.teacher_id  # Add teacher_id
-    
+    course_data.pop("teacher_email")  # Remove teacher_email
+    course_data["course_teacher_id"] = teacher.teacher_id  # Add teacher_id
+
     db_course = Course(**course_data, course_is_active=True)
     db.add(db_course)
     db.commit()
@@ -746,12 +748,10 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
 
 @app.get("/courses/{course_id}/details", response_model=CourseDetailResponse)
 def get_course_details(
-    course_id: int, 
-    current_user=Depends(get_current_user), 
-    db: Session = Depends(get_db)
+    course_id: int, current_user=Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Get detailed course information with students (for teachers and admins)"""
-    
+
     # Get course with teacher information
     course_query = (
         db.query(Course, Teacher)
@@ -759,39 +759,37 @@ def get_course_details(
         .filter(Course.course_id == course_id)
         .first()
     )
-    
+
     if not course_query:
         raise HTTPException(status_code=404, detail="Course not found")
-    
+
     course, teacher = course_query
-    
+
     # Check permissions
     if isinstance(current_user, Teacher):
         if course.course_teacher_id != current_user.teacher_id:
-            raise HTTPException(status_code=403, detail="You can only view details of your own courses")
+            raise HTTPException(
+                status_code=403, detail="You can only view details of your own courses"
+            )
     elif isinstance(current_user, Admin):
         if teacher.school_admin_id != current_user.admin_id:
-            raise HTTPException(status_code=403, detail="You can only view courses from your school")
+            raise HTTPException(
+                status_code=403, detail="You can only view courses from your school"
+            )
     elif isinstance(current_user, Student):
         # Students get basic info without student list
         pass
     else:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     # Count total assignments
     total_assignments = (
-        db.query(Assignment)
-        .filter(Assignment.assignment_course_id == course_id)
-        .count()
+        db.query(Assignment).filter(Assignment.assignment_course_id == course_id).count()
     )
-    
+
     # Count total enrolled students
-    total_students = (
-        db.query(Enrollment)
-        .filter(Enrollment.course_id == course_id)
-        .count()
-    )
-    
+    total_students = db.query(Enrollment).filter(Enrollment.course_id == course_id).count()
+
     # Get student details (only for teachers and admins)
     students_data = None
     if isinstance(current_user, (Teacher, Admin)):
@@ -802,45 +800,53 @@ def get_course_details(
             .filter(Enrollment.course_id == course_id)
             .all()
         )
-        
+
         students_data = []
         for student, enrollment in enrolled_students:
             # Count submitted assignments by this student in this course
             submitted_assignments = (
                 db.query(SubmittedAssignment)
-                .join(Assignment, SubmittedAssignment.submitted_assignment_assignment_id == Assignment.assignment_id)
+                .join(
+                    Assignment,
+                    SubmittedAssignment.submitted_assignment_assignment_id
+                    == Assignment.assignment_id,
+                )
                 .filter(
                     Assignment.assignment_course_id == course_id,
-                    SubmittedAssignment.submitted_assignment_student_id == student.student_id
+                    SubmittedAssignment.submitted_assignment_student_id == student.student_id,
                 )
                 .count()
             )
-            
+
             # Calculate average grade for this student in this course
             try:
                 submissions = (
                     db.query(SubmittedAssignment)
-                    .join(Assignment, SubmittedAssignment.submitted_assignment_assignment_id == Assignment.assignment_id)
+                    .join(
+                        Assignment,
+                        SubmittedAssignment.submitted_assignment_assignment_id
+                        == Assignment.assignment_id,
+                    )
                     .filter(
                         Assignment.assignment_course_id == course_id,
                         SubmittedAssignment.submitted_assignment_student_id == student.student_id,
-                        SubmittedAssignment.ai_grade.isnot(None)
+                        SubmittedAssignment.ai_grade.isnot(None),
                     )
                     .all()
                 )
-                
+
                 if submissions:
                     grades = []
                     for submission in submissions:
                         if submission.ai_grade and len(submission.ai_grade) > 0:
                             grades.extend([float(grade) for grade in submission.ai_grade])
-                    
+
                     average_grade = round(sum(grades) / len(grades), 2) if grades else None
                 else:
                     average_grade = None
             except:
                 average_grade = None
-            
+
             students_data.append(
                 CourseStudentResponse(
                     student_id=student.student_id,
@@ -850,10 +856,10 @@ def get_course_details(
                     enrollment_date=enrollment.enrollment_date,
                     submitted_assignments=submitted_assignments,
                     total_assignments=total_assignments,
-                    average_grade=average_grade
+                    average_grade=average_grade,
                 )
             )
-    
+
     return CourseDetailResponse(
         course_id=course.course_id,
         course_name=course.course_name,
@@ -864,7 +870,7 @@ def get_course_details(
         teacher_email=teacher.teacher_email,
         total_assignments=total_assignments,
         total_students=total_students,
-        students=students_data
+        students=students_data,
     )
 
 

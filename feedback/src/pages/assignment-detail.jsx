@@ -125,12 +125,48 @@ const AssignmentDetailsPage = () => {
                   <p>{assignment.assignment_description}</p>
                 </div>
 
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col lg={4}>
+            <Card>
+              <Card.Header>
+                <h6 className="mb-0">Assignment Details</h6>
+              </Card.Header>
+              <Card.Body>
+                <div className="mb-3">
+                  <h5>Course Information</h5>
+                  <p className="mb-1">{course?.course_name}</p>
+                  <p className="text-muted small">{course?.course_description}</p>
+                  <p className="mb-1"><strong>Instructor:</strong> {course?.course_teacher_id || 'N/A'}</p>
+                  <p className="mb-1"><strong>Code:</strong> {course?.course_name || 'N/A'}</p>
+                  <p className="mb-0"><strong>Students:</strong> {course?.students || 'N/A'}</p>
+                </div>
+
+                {user.role === 'teacher' && (
+                  <div>
+                    <h5>Submissions</h5>
+                    <p className="mb-1">
+                      <strong>Submitted:</strong> {assignment.submissionCount || 0}/{assignment.totalStudents || 0}
+                    </p>
+                    <p className="mb-0">
+                      <strong>Completion Rate:</strong> {Math.round(((assignment.submissionCount || 0) / (assignment.totalStudents || 1)) * 100)}%
+                    </p>
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+        <Row className="mb-4 my-4">
+          <Col>
+            <Card>
                 {user.role === 'student' ? (
                   <>
                     {!submission ? (
                       <Form onSubmit={handleFormSubmit}>
                         <Form.Group controlId="formFile" className="mb-3">
-                          <Form.Label>Upload your assignment submission</Form.Label>
+                          <Form.Label><Card.Title>Upload your assignment submission</Card.Title></Form.Label>
                           <Form.Control type="file" onChange={handleFileChange} />
                           <Form.Text className="text-muted">
                             Submit your completed assignment for grading and feedback.
@@ -170,7 +206,9 @@ const AssignmentDetailsPage = () => {
                 ) : (
                   <Form onSubmit={handleFormSubmit}>
                     <Form.Group controlId="formFile" className="mb-3">
-                      <Form.Label>Upload teaching materials</Form.Label>
+                      <Form.Label>
+                        <Card.Title>Upload teaching materials</Card.Title>
+                      </Form.Label>
                       <Form.Control type="file" onChange={handleFileChange} />
                       <Form.Text className="text-muted">
                         Upload solution files, additional resources, or assignment materials.
@@ -182,37 +220,6 @@ const AssignmentDetailsPage = () => {
                     {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
                   </Form>
                 )}
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col lg={4}>
-            <Card>
-              <Card.Header>
-                <h6 className="mb-0">Assignment Details</h6>
-              </Card.Header>
-              <Card.Body>
-                <div className="mb-3">
-                  <h5>Course Information</h5>
-                  <p className="mb-1">{course?.course_name}</p>
-                  <p className="text-muted small">{course?.course_description}</p>
-                  <p className="mb-1"><strong>Instructor:</strong> {course?.course_teacher_id || 'N/A'}</p>
-                  <p className="mb-1"><strong>Code:</strong> {course?.course_name || 'N/A'}</p>
-                  <p className="mb-0"><strong>Students:</strong> {course?.students || 'N/A'}</p>
-                </div>
-
-                {user.role === 'teacher' && (
-                  <div>
-                    <h5>Submissions</h5>
-                    <p className="mb-1">
-                      <strong>Submitted:</strong> {assignment.submissionCount || 0}/{assignment.totalStudents || 0}
-                    </p>
-                    <p className="mb-0">
-                      <strong>Completion Rate:</strong> {Math.round(((assignment.submissionCount || 0) / (assignment.totalStudents || 1)) * 100)}%
-                    </p>
-                  </div>
-                )}
-              </Card.Body>
             </Card>
           </Col>
         </Row>
