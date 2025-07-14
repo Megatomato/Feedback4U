@@ -46,6 +46,8 @@ from database import (
     AssignmentCreate,
     AssignmentResponse,
     AssignmentWithCourseResponse,
+    CourseStudentResponse,
+    CourseDetailResponse,
     SubmissionResponse,
     Token,
     create_cross_table_email_uniqueness_triggers,
@@ -675,6 +677,130 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     return course
+
+
+@app.get("/courses/{course_id}/details", response_model=CourseDetailResponse)
+def get_course_details(
+    course_id: int, 
+    current_user=Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    """Get detailed course information with students (for teachers and admins)"""
+    
+    # Get course with teacher information
+    course_query = (
+        db.query(Course, Teacher)
+        .join(Teacher, Course.course_teacher_id == Teacher.teacher_id)
+        .filter(Course.course_id == course_id)
+        .first()
+    )
+    
+    if not course_query:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    course, teacher = course_query
+    
+    # Check permissions
+    if isinstance(current_user, Teacher):
+        if course.course_teacher_id != current_user.teacher_id:
+            raise HTTPException(status_code=403, detail="You can only view details of your own courses")
+    elif isinstance(current_user, Admin):
+        if teacher.school_admin_id != current_user.admin_id:
+            raise HTTPException(status_code=403, detail="You can only view courses from your school")
+    elif isinstance(current_user, Student):
+        # Students get basic info without student list
+        pass
+    else:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Count total assignments
+    total_assignments = (
+        db.query(Assignment)
+        .filter(Assignment.assignment_course_id == course_id)
+        .count()
+    )
+    
+    # Count total enrolled students
+    total_students = (
+        db.query(Enrollment)
+        .filter(Enrollment.course_id == course_id)
+        .count()
+    )
+    
+    # Get student details (only for teachers and admins)
+    students_data = None
+    if isinstance(current_user, (Teacher, Admin)):
+        # Get enrolled students with their submission statistics
+        enrolled_students = (
+            db.query(Student, Enrollment)
+            .join(Enrollment, Student.student_id == Enrollment.student_id)
+            .filter(Enrollment.course_id == course_id)
+            .all()
+        )
+        
+        students_data = []
+        for student, enrollment in enrolled_students:
+            # Count submitted assignments by this student in this course
+            submitted_assignments = (
+                db.query(SubmittedAssignment)
+                .join(Assignment, SubmittedAssignment.submitted_assignment_assignment_id == Assignment.assignment_id)
+                .filter(
+                    Assignment.assignment_course_id == course_id,
+                    SubmittedAssignment.submitted_assignment_student_id == student.student_id
+                )
+                .count()
+            )
+            
+            # Calculate average grade for this student in this course
+            try:
+                submissions = (
+                    db.query(SubmittedAssignment)
+                    .join(Assignment, SubmittedAssignment.submitted_assignment_assignment_id == Assignment.assignment_id)
+                    .filter(
+                        Assignment.assignment_course_id == course_id,
+                        SubmittedAssignment.submitted_assignment_student_id == student.student_id,
+                        SubmittedAssignment.ai_grade.isnot(None)
+                    )
+                    .all()
+                )
+                
+                if submissions:
+                    grades = []
+                    for submission in submissions:
+                        if submission.ai_grade and len(submission.ai_grade) > 0:
+                            grades.extend([float(grade) for grade in submission.ai_grade])
+                    
+                    average_grade = round(sum(grades) / len(grades), 2) if grades else None
+                else:
+                    average_grade = None
+            except:
+                average_grade = None
+            
+            students_data.append(
+                CourseStudentResponse(
+                    student_id=student.student_id,
+                    student_name=student.student_name,
+                    student_email=student.student_email,
+                    school_student_id=student.school_student_id,
+                    enrollment_date=enrollment.enrollment_date,
+                    submitted_assignments=submitted_assignments,
+                    total_assignments=total_assignments,
+                    average_grade=average_grade
+                )
+            )
+    
+    return CourseDetailResponse(
+        course_id=course.course_id,
+        course_name=course.course_name,
+        course_description=course.course_description,
+        course_is_active=course.course_is_active,
+        course_teacher_id=course.course_teacher_id,
+        teacher_name=teacher.teacher_name,
+        teacher_email=teacher.teacher_email,
+        total_assignments=total_assignments,
+        total_students=total_students,
+        students=students_data
+    )
 
 
 @app.get("/teacher/courses", response_model=List[CourseWithStatsResponse])

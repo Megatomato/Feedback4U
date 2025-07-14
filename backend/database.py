@@ -338,6 +338,36 @@ class AssignmentWithCourseResponse(BaseModel):
         from_attributes = True
 
 
+class CourseStudentResponse(BaseModel):
+    student_id: int
+    student_name: str
+    student_email: str
+    school_student_id: int
+    enrollment_date: datetime
+    submitted_assignments: int
+    total_assignments: int
+    average_grade: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CourseDetailResponse(BaseModel):
+    course_id: int
+    course_name: str
+    course_description: str
+    course_is_active: bool
+    course_teacher_id: int
+    teacher_name: str
+    teacher_email: str
+    total_assignments: int
+    total_students: int
+    students: Optional[List[CourseStudentResponse]] = None
+
+    class Config:
+        from_attributes = True
+
+
 class SubmissionResponse(BaseModel):
     submission_id: int
     submitted_assignment_student_id: int

@@ -71,6 +71,35 @@ function StudentNav() {
   );
 };
 
+function TeacherNav() {
+  return (
+    <Navbar bg="primary" data-bs-theme="dark" fixed="top">
+      <Container>
+        <Image src={logo} rounded height="35px"/>
+        <Navbar.Brand as={Link} to="/" className="fw-bold">
+          <i className="bi bi-book me-2"></i>
+          Feedback4U
+        </Navbar.Brand>
+
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
+            <Nav.Link as={Link} to="/dashboard">
+              <i className="bi bi-house me-1"></i>
+              Dashboard
+            </Nav.Link>
+            <Nav.Link as={Link} to="/courses">
+              <i className="bi bi-journal-text me-1"></i>
+              Courses
+            </Nav.Link>
+          </Nav>
+          <Logout/>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
+  );
+};
+
 function Logout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -100,4 +129,4 @@ function Logout() {
     );
 };
 
-export { LandNav, AdminNav, StudentNav };
+export { LandNav, AdminNav, StudentNav, TeacherNav };

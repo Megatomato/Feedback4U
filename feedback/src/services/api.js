@@ -154,6 +154,7 @@ export const courseAPI = {
   getAll: () => api.get('/courses'),
   getAdminSchoolCourses: () => api.get('/admin/courses'), // Get courses for admin's school only
   getById: (id) => api.get(`/courses/${id}`),
+  getDetails: (id) => api.get(`/courses/${id}/details`), // Get course details with students
 };
 
 // Assignment API calls
