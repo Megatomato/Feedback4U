@@ -381,6 +381,15 @@ async def get_teachers(current_user=Depends(get_current_user), db: Session = Dep
     return teachers
 
 
+@app.get("/teachers/{teacher_id}", response_model=TeacherResponse)
+def get_teacher(teacher_id: int, db: Session = Depends(get_db)):
+    """Get teacher information by teacher_id"""
+    teacher = db.query(Teacher).filter(Teacher.teacher_id == teacher_id).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    return teacher
+
+
 @app.get("/admins", response_model=List[AdminResponse])
 async def get_admins(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     admins = db.query(Admin).all()
