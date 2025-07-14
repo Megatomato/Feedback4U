@@ -192,7 +192,7 @@ async def root():
 async def health_check(db: Session = Depends(get_db)):
     try:
         # Test database connection with a simple query
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         return {
             "status": "healthy",
             "database": "connected",
@@ -214,7 +214,7 @@ async def health_check(db: Session = Depends(get_db)):
 async def upload_reference(
     file: UploadFile = File(..., description="The reference PDF file (e.g., rubric, exemplar)."),
     assignment_id: str = Form(..., description="Assignment ID, e.g. 'A1'."),
-    doc_type: str = Form(..., description="Type of document (e.g., 'rubric', 'exemplar')."),
+    doc_type: str = Form("rubric", description="Type of document (e.g., 'rubric', 'exemplar')."),
     chunker: str = Form(
         "recursive", enum=["recursive", "semantic"], description="Chunking strategy."
     ),
@@ -1053,7 +1053,9 @@ def create_enrollment(
     return db_enrollment
 
 
-@app.post("/admin/enrollments", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/admin/enrollments", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED
+)
 def create_enrollment_by_school_id(
     enrollment: EnrollmentCreateBySchoolId,
     db: Session = Depends(get_db),
@@ -1068,24 +1070,26 @@ def create_enrollment_by_school_id(
         db.query(Student)
         .filter(
             Student.school_student_id == enrollment.school_student_id,
-            Student.school_admin_id == current_user.admin_id
+            Student.school_admin_id == current_user.admin_id,
         )
         .first()
     )
-    
+
     if not student:
         raise HTTPException(
-            status_code=404, 
-            detail=f"Student with school ID {enrollment.school_student_id} not found in your school"
+            status_code=404,
+            detail=f"Student with school ID {enrollment.school_student_id} not found in your school",
         )
 
     # Check if course exists and belongs to the same school
     course = db.query(Course).filter(Course.course_id == enrollment.course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    
+
     # Verify course belongs to the same school
-    course_teacher = db.query(Teacher).filter(Teacher.teacher_id == course.course_teacher_id).first()
+    course_teacher = (
+        db.query(Teacher).filter(Teacher.teacher_id == course.course_teacher_id).first()
+    )
     if not course_teacher or course_teacher.school_admin_id != current_user.admin_id:
         raise HTTPException(status_code=403, detail="Course does not belong to your school")
 
@@ -1101,8 +1105,8 @@ def create_enrollment_by_school_id(
 
     if existing_enrollment:
         raise HTTPException(
-            status_code=400, 
-            detail=f"Student {student.student_name} is already enrolled in this course"
+            status_code=400,
+            detail=f"Student {student.student_name} is already enrolled in this course",
         )
 
     # Create new enrollment
@@ -1206,25 +1210,22 @@ def get_assignments_for_course(course_id: int, db: Session = Depends(get_db)):
 
 @app.get("/student/assignments/due-soon", response_model=List[AssignmentWithCourseResponse])
 def get_student_assignments_due_soon(
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user=Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Get the top 3 upcoming assignments due for the current student"""
     if not isinstance(current_user, Student):
         raise HTTPException(status_code=403, detail="Only students can access their assignments")
 
     student_id = current_user.student_id
-    
+
     # Get current time
     now = datetime.utcnow()
-    
+
     # Get all course IDs the student is enrolled in
     enrolled_course_ids = (
-        db.query(Enrollment.course_id)
-        .filter(Enrollment.student_id == student_id)
-        .subquery()
+        db.query(Enrollment.course_id).filter(Enrollment.student_id == student_id).subquery()
     )
-    
+
     # Get the top 3 upcoming assignments in enrolled courses
     assignments_query = (
         db.query(Assignment, Course)
@@ -1232,14 +1233,14 @@ def get_student_assignments_due_soon(
         .filter(
             Assignment.assignment_course_id.in_(enrolled_course_ids),
             Assignment.assignment_due_date >= now,
-            Assignment.assignment_status == "active"
+            Assignment.assignment_status == "active",
         )
         .order_by(Assignment.assignment_due_date)
         .limit(3)
     )
-    
+
     assignments_with_courses = assignments_query.all()
-    
+
     # Check which assignments have been submitted
     result = []
     for assignment, course in assignments_with_courses:
@@ -1248,11 +1249,11 @@ def get_student_assignments_due_soon(
             db.query(SubmittedAssignment)
             .filter(
                 SubmittedAssignment.submitted_assignment_student_id == student_id,
-                SubmittedAssignment.submitted_assignment_assignment_id == assignment.assignment_id
+                SubmittedAssignment.submitted_assignment_assignment_id == assignment.assignment_id,
             )
             .first()
         )
-        
+
         result.append(
             AssignmentWithCourseResponse(
                 assignment_id=assignment.assignment_id,
@@ -1262,10 +1263,10 @@ def get_student_assignments_due_soon(
                 assignment_status=assignment.assignment_status,
                 assignment_course_id=assignment.assignment_course_id,
                 course_name=course.course_name,
-                is_submitted=submission is not None
+                is_submitted=submission is not None,
             )
         )
-    
+
     return result
 
 

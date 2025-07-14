@@ -6,6 +6,7 @@ import Modal from 'react-bootstrap/Modal';
 
 import { authAPI, courseAPI, enrollmentAPI, studentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useAdminId } from '../context/AdminProviders';
 
 function AddStudentForm() {
   const [formData, setFormData] = useState({
@@ -81,7 +82,7 @@ function AddStudentForm() {
          <div className="mb-3">
            <p><strong>Name:</strong> {studentData.name}</p>
            <p><strong>Email:</strong> {studentData.email}</p>
-           <p><strong>Temporary Password:</strong> 
+           <p><strong>Temporary Password:</strong>
              <code className="ms-2 p-2 bg-light text-danger">
                {studentData.generated_password}
              </code>
@@ -89,7 +90,7 @@ function AddStudentForm() {
          </div>
          <Alert variant="warning" className="mb-3">
            <small>
-             <strong>Important:</strong> Please share this temporary password with the student securely. 
+             <strong>Important:</strong> Please share this temporary password with the student securely.
              They should change it after their first login.
            </small>
          </Alert>
@@ -242,7 +243,7 @@ function AddTeacherForm() {
          <div className="mb-3">
            <p><strong>Name:</strong> {teacherData.name}</p>
            <p><strong>Email:</strong> {teacherData.email}</p>
-           <p><strong>Temporary Password:</strong> 
+           <p><strong>Temporary Password:</strong>
              <code className="ms-2 p-2 bg-light text-danger">
                {teacherData.generated_password}
              </code>
@@ -250,7 +251,7 @@ function AddTeacherForm() {
          </div>
          <Alert variant="warning" className="mb-3">
            <small>
-             <strong>Important:</strong> Please share this temporary password with the teacher securely. 
+             <strong>Important:</strong> Please share this temporary password with the teacher securely.
              They should change it after their first login.
            </small>
          </Alert>
@@ -364,13 +365,13 @@ function AddCourseForm() {
 
     try {
       console.log('Form submitted:', formData);
-      
+
       // Debug: Check if user is authenticated and what role they have
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
       console.log('Current user data:', currentUser);
       console.log('User role:', currentUser.role);
       console.log('Token:', localStorage.getItem('token'));
-      
+
       // Also fetch fresh user data from /me endpoint
       try {
         const { authAPI } = await import('../services/api');
@@ -379,7 +380,7 @@ function AddCourseForm() {
       } catch (err) {
         console.error('Failed to get current user:', err);
       }
-      
+
       const result = await courseAPI.create(formData);
 
       setSubmitSuccess(true);
@@ -574,7 +575,8 @@ function EnrollStudentForm() {
 
   // Fetch courses when component mounts
   const { user } = useAuth();
-  
+  const adminId = useAdminId();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -586,7 +588,7 @@ function EnrollStudentForm() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 

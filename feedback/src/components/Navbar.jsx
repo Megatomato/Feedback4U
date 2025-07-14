@@ -47,7 +47,7 @@ function StudentNav() {
     <Navbar bg="primary" data-bs-theme="dark" fixed="top">
       <Container>
         <Image src={logo} rounded height="35px"/>
-        <Navbar.Brand as={Link} to="/" className="fw-bold">
+        <Navbar.Brand as={Link} to="/dashboard" className="fw-bold">
           <i className="bi bi-book me-2"></i>
           Feedback4U
         </Navbar.Brand>

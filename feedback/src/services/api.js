@@ -37,7 +37,7 @@ export const authAPI = {
     // Extract admin name from email if not provided
     const emailUsername = data.email.split('@')[0];
     const adminName = data.adminName || `${emailUsername} (Admin)`;
-    
+
     const payload = {
       school_name: data.schoolName,
       email: data.email,
@@ -53,7 +53,7 @@ export const authAPI = {
     // Get current user from localStorage to get school_admin_id
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const schoolAdminId = currentUser.role === 'admin' ? currentUser.id : currentUser.school_admin_id;
-    
+
     const payload = {
       email: data.email,
       name: data.name,
@@ -70,7 +70,7 @@ export const authAPI = {
     // Get current user from localStorage to get school_admin_id
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const schoolAdminId = currentUser.role === 'admin' ? currentUser.id : currentUser.school_admin_id;
-    
+
     const payload = {
       email: data.email,
       name: data.name,
@@ -139,6 +139,11 @@ export const enrollmentAPI = {
 // Course API calls
 export const courseAPI = {
   create: (data) => {
+    const teacherId = parseInt(data.teacher_id);
+    if (isNaN(teacherId)) {
+      throw new Error('Teacher ID must be a valid number');
+    }
+
     const payload = {
       course_name: data.name,
       course_description: data.description,
@@ -161,6 +166,15 @@ export const assignmentAPI = {
     const formData = new FormData();
     formData.append('file', file);
     return api.post(`/assignments/${assignmentId}/submit`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  submitRef: (assignmentId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/upload-reference/${assignmentId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

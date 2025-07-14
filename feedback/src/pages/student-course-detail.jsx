@@ -23,7 +23,7 @@ const StudentCourseDetail = () => {
           courseAPI.getDetails(id),
           assignmentAPI.getForCourse(id)
         ]);
-        
+
         setCourseDetails(courseRes.data);
         setAssignments(assignmentsRes.data || []);
       } catch (error) {
@@ -82,7 +82,7 @@ const StudentCourseDetail = () => {
       <Container className="my-4">
         <div className="d-flex align-items-center mb-4">
           <Button variant="outline-secondary" onClick={() => navigate(-1)} className="me-3">
-            <i className="bi bi-arrow-left"></i>
+            <i className="bi bi-arrow-left">Back to Dashboard</i>
           </Button>
           <div>
             <h1 className="mb-0">{courseDetails.course_name}</h1>
@@ -92,7 +92,7 @@ const StudentCourseDetail = () => {
             </small>
           </div>
         </div>
-        
+
         <Row>
           <Col lg={8}>
             <Card>
@@ -150,4 +150,4 @@ const StudentCourseDetail = () => {
   );
 };
 
-export default StudentCourseDetail; 
+export default StudentCourseDetail;

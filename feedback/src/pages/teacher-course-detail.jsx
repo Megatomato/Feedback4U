@@ -23,7 +23,7 @@ const TeacherCourseDetail = () => {
           courseAPI.getDetails(id),
           assignmentAPI.getForCourse(id)
         ]);
-        
+
         setCourseDetails(courseRes.data);
         setAssignments(assignmentsRes.data || []);
       } catch (error) {
@@ -92,7 +92,7 @@ const TeacherCourseDetail = () => {
         <div className="d-flex align-items-center justify-content-between mb-4">
           <div className="d-flex align-items-center">
             <Button variant="outline-secondary" onClick={() => navigate(-1)} className="me-3">
-              <i className="bi bi-arrow-left"></i>
+              <i className="bi bi-arrow-left">Back to Dashboard</i>
             </Button>
             <div>
               <h1 className="mb-0">{courseDetails.course_name}</h1>
@@ -129,8 +129,8 @@ const TeacherCourseDetail = () => {
             <Card className="text-center">
               <Card.Body>
                 <h3 className="text-primary">
-                  {courseDetails.students ? 
-                    Math.round((courseDetails.students.reduce((sum, s) => sum + s.submitted_assignments, 0) / 
+                  {courseDetails.students ?
+                    Math.round((courseDetails.students.reduce((sum, s) => sum + s.submitted_assignments, 0) /
                     (courseDetails.students.length * courseDetails.total_assignments)) * 100) || 0 : 0}%
                 </h3>
                 <p className="text-muted mb-0">Completion Rate</p>
@@ -141,8 +141,8 @@ const TeacherCourseDetail = () => {
             <Card className="text-center">
               <Card.Body>
                 <h3 className="text-primary">
-                  {courseDetails.students ? 
-                    (courseDetails.students.filter(s => s.average_grade !== null).reduce((sum, s) => sum + (s.average_grade || 0), 0) / 
+                  {courseDetails.students ?
+                    (courseDetails.students.filter(s => s.average_grade !== null).reduce((sum, s) => sum + (s.average_grade || 0), 0) /
                     courseDetails.students.filter(s => s.average_grade !== null).length || 0).toFixed(1) : 'N/A'}
                 </h3>
                 <p className="text-muted mb-0">Average Grade</p>
@@ -150,7 +150,7 @@ const TeacherCourseDetail = () => {
             </Card>
           </Col>
         </Row>
-        
+
         <Row>
           <Col lg={6}>
             <Card className="mb-4">
@@ -197,10 +197,10 @@ const TeacherCourseDetail = () => {
                       </thead>
                       <tbody>
                         {courseDetails.students.map(student => {
-                          const progressPercent = courseDetails.total_assignments > 0 
-                            ? Math.round((student.submitted_assignments / courseDetails.total_assignments) * 100) 
+                          const progressPercent = courseDetails.total_assignments > 0
+                            ? Math.round((student.submitted_assignments / courseDetails.total_assignments) * 100)
                             : 0;
-                          
+
                           return (
                             <tr key={student.student_id}>
                               <td>
@@ -219,7 +219,7 @@ const TeacherCourseDetail = () => {
                                     {student.submitted_assignments}/{courseDetails.total_assignments}
                                   </small>
                                   <div className="progress mt-1" style={{ height: '6px' }}>
-                                    <div 
+                                    <div
                                       className={`progress-bar ${progressPercent >= 80 ? 'bg-success' : progressPercent >= 60 ? 'bg-warning' : 'bg-danger'}`}
                                       style={{ width: `${progressPercent}%` }}
                                     ></div>
@@ -255,4 +255,4 @@ const TeacherCourseDetail = () => {
   );
 };
 
-export default TeacherCourseDetail; 
+export default TeacherCourseDetail;
