@@ -111,6 +111,7 @@ export const studentAPI = {
   delete: (id) => api.delete(`/students/${id}`),
   getCourses: () => api.get('/student/courses'),
   getStatistics: () => api.get('/student/statistics'),
+  getAssignmentsDueSoon: () => api.get('/student/assignments/due-soon'),
 };
 
 // Teacher API calls

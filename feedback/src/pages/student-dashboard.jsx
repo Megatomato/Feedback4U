@@ -14,6 +14,7 @@ const StudentDashboard = () => {
   // State for real API data
   const [courses, setCourses] = useState([]);
   const [statistics, setStatistics] = useState(null);
+  const [dueSoonAssignments, setDueSoonAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -27,16 +28,19 @@ const StudentDashboard = () => {
         setLoading(true);
         setError(null);
 
-        const [coursesRes, statisticsRes] = await Promise.all([
+        const [coursesRes, statisticsRes, dueSoonRes] = await Promise.all([
           studentAPI.getCourses(),
-          studentAPI.getStatistics()
+          studentAPI.getStatistics(),
+          studentAPI.getAssignmentsDueSoon()
         ]);
 
         console.log('Student courses response:', coursesRes);
         console.log('Student statistics response:', statisticsRes);
+        console.log('Student due soon assignments response:', dueSoonRes);
 
         setCourses(coursesRes.data || []);
         setStatistics(statisticsRes.data || null);
+        setDueSoonAssignments(dueSoonRes.data || []);
 
       } catch (error) {
         console.error("Failed to fetch student data", error);
@@ -46,6 +50,7 @@ const StudentDashboard = () => {
         // Set safe defaults on error
         setCourses([]);
         setStatistics(null);
+        setDueSoonAssignments([]);
       } finally {
         setLoading(false);
       }
@@ -54,19 +59,10 @@ const StudentDashboard = () => {
     fetchStudentData();
   }, []);
 
-  // Get recent submissions
+  // Get recent submissions (keeping hardcoded as requested)
   const recentSubmissions = sampleData.submissions
     .filter(submission => submission.studentId === user.id)
     .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
-    .slice(0, 5);
-
-  // Get assignments due soon
-  const dueSoonAssignments = sampleData.assignments
-    .filter(assignment => {
-      const daysUntil = getDaysUntilDue(assignment.dueDate);
-      return daysUntil >= 0 && daysUntil <= 7;
-    })
-    .sort((a, b) => getDaysUntilDue(a.dueDate) - getDaysUntilDue(b.dueDate))
     .slice(0, 5);
 
   const handleCourseClick = (courseId) => {
@@ -75,6 +71,18 @@ const StudentDashboard = () => {
 
   const handleAssignmentClick = (assignmentId) => {
     navigate(`/assignment/${assignmentId}`);
+  };
+
+  // Helper function to calculate days until due date
+  const getDaysUntilDueDate = (dueDateString) => {
+    const dueDate = new Date(dueDateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = dueDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   if (loading) {
@@ -139,24 +147,28 @@ const StudentDashboard = () => {
               <div className="list-group list-group-flush">
                 {dueSoonAssignments.length > 0 ? (
                   dueSoonAssignments.map(assignment => {
-                    const course = sampleData.courses.find(c => c.id === assignment.courseId);
-                    const daysUntil = getDaysUntilDue(assignment.dueDate);
+                    const daysUntil = getDaysUntilDueDate(assignment.assignment_due_date);
                     return (
                       <div
-                        key={assignment.id}
+                        key={assignment.assignment_id}
                         className="list-group-item list-group-item-action"
-                        onClick={() => handleAssignmentClick(assignment.id)}
+                        onClick={() => handleAssignmentClick(assignment.assignment_id)}
                         style={{ cursor: 'pointer' }}
                       >
                         <div className="d-flex justify-content-between align-items-start">
                           <div className="flex-grow-1">
-                            <h6 className="mb-1">{assignment.title}</h6>
-                            <Badge bg={daysUntil === 0 ? 'danger' : 'warning'}>
-                              {daysUntil === 0 ? 'Due Today' : `${daysUntil} days`}
-                            </Badge>
+                            <h6 className="mb-1">{assignment.assignment_name}</h6>
+                            <div className="d-flex gap-2">
+                              <Badge bg={daysUntil === 0 ? 'danger' : daysUntil === 1 ? 'warning' : 'info'}>
+                                {daysUntil === 0 ? 'Due Today' : daysUntil === 1 ? 'Due Tomorrow' : `${daysUntil} days`}
+                              </Badge>
+                              {assignment.is_submitted && (
+                                <Badge bg="success">Submitted</Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <small className="text-muted">{course?.name}</small>
+                        <small className="text-muted">{assignment.course_name}</small>
                       </div>
                     );
                   })

@@ -319,6 +319,20 @@ class AssignmentResponse(BaseModel):
         from_attributes = True
 
 
+class AssignmentWithCourseResponse(BaseModel):
+    assignment_id: int
+    assignment_name: str
+    assignment_description: str
+    assignment_due_date: datetime
+    assignment_status: str
+    assignment_course_id: int
+    course_name: str
+    is_submitted: bool = False
+
+    class Config:
+        from_attributes = True
+
+
 class SubmissionResponse(BaseModel):
     submission_id: int
     submitted_assignment_student_id: int

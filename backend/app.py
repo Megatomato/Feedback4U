@@ -44,6 +44,7 @@ from database import (
     EnrollmentResponse,
     AssignmentCreate,
     AssignmentResponse,
+    AssignmentWithCourseResponse,
     SubmissionResponse,
     Token,
     create_cross_table_email_uniqueness_triggers,
@@ -939,6 +940,71 @@ def get_assignment(assignment_id: int, db: Session = Depends(get_db)):
 def get_assignments_for_course(course_id: int, db: Session = Depends(get_db)):
     assignments = db.query(Assignment).filter(Assignment.assignment_course_id == course_id).all()
     return assignments
+
+
+@app.get("/student/assignments/due-soon", response_model=List[AssignmentWithCourseResponse])
+def get_student_assignments_due_soon(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get the top 3 upcoming assignments due for the current student"""
+    if not isinstance(current_user, Student):
+        raise HTTPException(status_code=403, detail="Only students can access their assignments")
+
+    student_id = current_user.student_id
+    
+    # Get current time
+    now = datetime.utcnow()
+    
+    # Get all course IDs the student is enrolled in
+    enrolled_course_ids = (
+        db.query(Enrollment.course_id)
+        .filter(Enrollment.student_id == student_id)
+        .subquery()
+    )
+    
+    # Get the top 3 upcoming assignments in enrolled courses
+    assignments_query = (
+        db.query(Assignment, Course)
+        .join(Course, Assignment.assignment_course_id == Course.course_id)
+        .filter(
+            Assignment.assignment_course_id.in_(enrolled_course_ids),
+            Assignment.assignment_due_date >= now,
+            Assignment.assignment_status == "active"
+        )
+        .order_by(Assignment.assignment_due_date)
+        .limit(3)
+    )
+    
+    assignments_with_courses = assignments_query.all()
+    
+    # Check which assignments have been submitted
+    result = []
+    for assignment, course in assignments_with_courses:
+        # Check if student has submitted this assignment
+        submission = (
+            db.query(SubmittedAssignment)
+            .filter(
+                SubmittedAssignment.submitted_assignment_student_id == student_id,
+                SubmittedAssignment.submitted_assignment_assignment_id == assignment.assignment_id
+            )
+            .first()
+        )
+        
+        result.append(
+            AssignmentWithCourseResponse(
+                assignment_id=assignment.assignment_id,
+                assignment_name=assignment.assignment_name,
+                assignment_description=assignment.assignment_description,
+                assignment_due_date=assignment.assignment_due_date,
+                assignment_status=assignment.assignment_status,
+                assignment_course_id=assignment.assignment_course_id,
+                course_name=course.course_name,
+                is_submitted=submission is not None
+            )
+        )
+    
+    return result
 
 
 @app.post("/assignments/{assignment_id}/submit", response_model=SubmissionResponse)
