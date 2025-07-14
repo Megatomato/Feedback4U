@@ -147,13 +147,14 @@ export const courseAPI = {
     const payload = {
       course_name: data.name,
       course_description: data.description,
-      course_teacher_id: teacherId,
+      teacher_email: data.teacher_email,
     };
     return api.post('/courses', payload);
   },
   getAll: () => api.get('/courses'),
   getAdminSchoolCourses: () => api.get('/admin/courses'), // Get courses for admin's school only
   getById: (id) => api.get(`/courses/${id}`),
+  getDetails: (id) => api.get(`/courses/${id}/details`), // Get course details with students
 };
 
 // Assignment API calls

@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { CourseCard } from '../components/Cards';
 import { StudentNav } from '../components/Navbar';
 import { courseAPI } from '../services/api';
+import { studentAPI } from '../services/api';
+import { teacherAPI } from '../services/api';
 
 const CoursesPage = () => {
   const { user } = useAuth();
@@ -16,7 +18,9 @@ const CoursesPage = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const coursesRes = await courseAPI.getAll();
+        const coursesRes = user.role === 'teacher'
+          ? await teacherAPI.getCourses()
+          : await studentAPI.getCourses();
         console.log('Courses response:', coursesRes);
         setCourses(coursesRes.data || []);
       } catch (err) {
