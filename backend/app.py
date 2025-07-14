@@ -14,6 +14,11 @@ import uvicorn
 import database
 import random
 import string
+import tempfile
+import logging
+
+# Import from RAG module
+from RAG.rag_db import ingest_reference_file
 
 # Import database models and schemas
 from database import (
@@ -201,6 +206,52 @@ async def health_check(db: Session = Depends(get_db)):
                 "timestamp": datetime.utcnow().isoformat(),
             },
         )
+
+
+@app.post("/upload-reference/", summary="Upload a reference document")
+async def upload_reference(
+    file: UploadFile = File(..., description="The reference PDF file (e.g., rubric, exemplar)."),
+    course_id: str = Form(..., description="Course ID, e.g. 'MATH101'."),
+    doc_type: str = Form(..., description="Type of document (e.g., 'rubric', 'exemplar')."),
+    chunker: str = Form(
+        "recursive", enum=["recursive", "semantic"], description="Chunking strategy."
+    ),
+    embedder: str = Form(
+        "gitee", enum=["openai", "gemini", "gitee"], description="Embedding model."
+    ),
+    current_user=Depends(get_current_user),
+):
+    """
+    Uploads a reference document, processes it, and stores it in the vector database.
+    This is used to provide context (like rubrics or exemplars) for feedback generation.
+    """
+    tmp_path = None
+    try:
+        # Save uploaded file to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(await file.read())
+            tmp_path = tmp.name
+
+        logging.info(f"Processing reference file: {file.filename} for course {course_id}")
+        ingest_reference_file(
+            file_path=tmp_path,
+            course_id=course_id,
+            doc_type=doc_type,
+            chunker=chunker,
+            embedder_name=embedder,
+        )
+
+    except Exception as e:
+        logging.error(f"Error processing reference file: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up the temporary file
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+    return {
+        "message": f"Reference document '{file.filename}' uploaded successfully for course '{course_id}'."
+    }
 
 
 # Authentication routes
