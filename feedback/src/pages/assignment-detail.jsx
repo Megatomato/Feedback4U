@@ -62,7 +62,7 @@ const AssignmentDetailsPage = () => {
         alert("Submission successful!");
       } else if (user.role === 'teacher') {
         // Teacher upload (solution or materials)
-        res = await assignmentAPI.uploadMaterials(id, selectedFile);
+        res = await assignmentAPI.submitRef(id, selectedFile);
         alert("Materials uploaded successfully!");
       }
     } catch (err) {

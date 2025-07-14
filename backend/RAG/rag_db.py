@@ -24,14 +24,14 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 import pgvector.sqlalchemy
-from preprocessing.preprocessing import run as recursive_chunker
+from .preprocessing.preprocessing import run as recursive_chunker
 from sqlalchemy import text as sqltext
 
 
 # # Embedding providers
 # Always import the OpenAI implementation – tests patch the *origin* library path.
 from langchain_openai import OpenAIEmbeddings
-from gitee_embeddings import GiteeAIEmbeddings
+from .gitee_embeddings import GiteeAIEmbeddings
 # from langchain_google_genai import GoogleGenerativeAIEmbeddings  # gemini
 
 # Import the HuggingFace implementation **only if** it has not been monkey-patched already.

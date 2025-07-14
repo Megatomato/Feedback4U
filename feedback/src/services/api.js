@@ -170,6 +170,15 @@ export const assignmentAPI = {
       },
     });
   },
+  submitRef: (assignmentId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/upload-reference/${assignmentId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 export default api;
