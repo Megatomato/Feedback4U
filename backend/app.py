@@ -627,7 +627,21 @@ def create_course(
             detail=f"Only admins can create courses. Current user type: {type(current_user).__name__}",
         )
 
-    db_course = Course(**course.model_dump(), course_is_active=True)
+    # Find teacher by email
+    teacher = db.query(Teacher).filter(Teacher.teacher_email == course.teacher_email).first()
+    if not teacher:
+        raise HTTPException(status_code=404, detail=f"Teacher with email {course.teacher_email} not found")
+    
+    # Verify teacher belongs to the same school as admin
+    if teacher.school_admin_id != current_user.admin_id:
+        raise HTTPException(status_code=403, detail="Teacher does not belong to your school")
+
+    # Create course with teacher_id from the found teacher
+    course_data = course.model_dump()
+    course_data.pop('teacher_email')  # Remove teacher_email
+    course_data['course_teacher_id'] = teacher.teacher_id  # Add teacher_id
+    
+    db_course = Course(**course_data, course_is_active=True)
     db.add(db_course)
     db.commit()
     db.refresh(db_course)

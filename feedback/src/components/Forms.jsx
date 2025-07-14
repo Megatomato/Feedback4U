@@ -322,7 +322,7 @@ function AddCourseForm() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    teacher_id: ""
+    teacher_email: ""
   });
 
   const [validated, setValidated] = useState(false);
@@ -341,7 +341,7 @@ function AddCourseForm() {
     setFormData({
       name: "",
       description: "",
-      teacher_id: ""
+      teacher_email: ""
     });
     setValidated(false);
     setSubmitSuccess(false);
@@ -434,17 +434,17 @@ function AddCourseForm() {
              </Form.Control.Feedback>
            </Form.Group>
            <Form.Group controlId="phoneNumber" className="mb-3">
-             <Form.Label>Teacher ID</Form.Label>
+             <Form.Label>Teacher Email</Form.Label>
              <Form.Control
                required
-               type="teacher_id"
-               placeholder="986214"
-               name="teacher_id"
-               value={formData.teacher_id}
+               type="email"
+               placeholder="teacher@uq.edu.au"
+               name="teacher_email"
+               value={formData.teacher_email}
                onChange={handleChange}
              />
              <Form.Control.Feedback type="invalid">
-               Please provide the id of the teacher.
+               Please provide the email of the teacher.
              </Form.Control.Feedback>
            </Form.Group>
            <div className="d-grid gap-2 mt-4">

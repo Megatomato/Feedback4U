@@ -230,7 +230,7 @@ class TeacherResponse(BaseModel):
 class CourseCreate(BaseModel):
     course_name: str
     course_description: str
-    course_teacher_id: int
+    teacher_email: EmailStr
 
 
 class CourseResponse(BaseModel):
