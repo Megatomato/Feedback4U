@@ -109,7 +109,7 @@ async def get_feedback(
         description="Embedding model for document ingestion.",
     ),
     provider: str = Form(
-        "gitee",
+        "deepseek",
         enum=["openai", "gemini", "gitee", "deepseek"],
         description="LLM provider for feedback generation.",
     ),

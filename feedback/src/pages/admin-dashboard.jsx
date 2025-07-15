@@ -64,12 +64,23 @@ const AdminDashPage = () => {
         }}>
         <Row>
           <Col>
-            <Row>
+            <Row className="mb-4">
               <h1>{statistics?.school_name || 'School'} Overview</h1>
-              <h4>Total Courses - {statistics?.total_courses || 0}</h4>
-              <h4>Total Teachers - {statistics?.total_teachers || 0}</h4>
-              <h4>Total Students - {statistics?.total_students || 0}</h4>
-              <h4>Average Submissions per Student - {statistics?.avg_submissions_per_student || 0}</h4>
+            </Row>
+            <Row className="mb-4">
+              <Card className="p-3">
+                <h4>Total Courses - {statistics?.total_courses || 0}</h4>
+                <h4>Total Teachers - {statistics?.total_teachers || 0}</h4>
+                <h4>Total Students - {statistics?.total_students || 0}</h4>
+                <Button variant="primary" size="sm" className="w-auto">
+                  Upgrade Plan
+                </Button>
+              </Card>
+            </Row>
+            <Row>
+              <Card className="p-3">
+                <h4>Average Submissions per Student - {statistics?.avg_submissions_per_student || 0}</h4>
+              </Card>
             </Row>
           </Col>
           <Col>
@@ -131,6 +142,9 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
               </Button>
               <Button variant="primary" onClick={() => handleShow('enrollStudent')} className="mb-2">
                 Enroll Student in Course
+              </Button>
+              <Button variant="outline-primary" onClick={() => handleShow('enrollStudent')} className="mb-2">
+                Unenroll Student in Course
               </Button>
             </ButtonGroup>
           </Card.Text>

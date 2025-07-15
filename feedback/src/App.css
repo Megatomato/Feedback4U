@@ -37,3 +37,7 @@
     transform: rotate(360deg);
   }
 }
+
+.react-chrome-dino ~ .react-chrome-dino {
+  display: none !important;
+}

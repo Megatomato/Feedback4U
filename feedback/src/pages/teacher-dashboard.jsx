@@ -37,13 +37,19 @@ const TeacherDashboard = () => {
 
         setCourses(coursesData);
         setStatistics(statisticsData);
-
-        // For now, keep assignments hardcoded as requested
-        // Fetch assignments for each course for assignment modal (only if we have courses)
         if (coursesData.length > 0) {
-          const assignmentsPromises = coursesData.map(c => assignmentAPI.getForCourse(c.course_id));
-        const assignmentsByCourse = await Promise.all(assignmentsPromises);
-          setAssignments(assignmentsByCourse.flatMap(res => res.data || []));
+          try {
+            const assignmentsPromises = coursesData.map(c =>
+              assignmentAPI.getForCourse(c.course_id).then(res => res.data || [])
+            );
+            const assignmentsByCourse = await Promise.all(assignmentsPromises);
+            const flattenedAssignments = assignmentsByCourse.flat();
+            setAssignments(flattenedAssignments);
+            console.log("Fetched assignments:", flattenedAssignments); // Log the actual data
+          } catch (error) {
+            console.error("Error fetching assignments:", error);
+            setAssignments([]);
+          }
         } else {
           setAssignments([]);
         }
@@ -285,7 +291,7 @@ const TeacherDashboard = () => {
         <Col lg={4}>
           <Card>
             <Card.Header>
-              <h5 className="mb-0">Recent Assignments</h5>
+              <h5 className="mb-0">Due Soon</h5>
             </Card.Header>
             <Card.Body>
               {assignments.slice(0, 3).map((assignment) => {

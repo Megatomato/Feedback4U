@@ -5,6 +5,7 @@ import { assignmentAPI, courseAPI } from '../services/api';
 import { formatDate } from '../utils/helpers';
 import { useAuth } from '../context/AuthContext';
 import { StudentNav } from '../components/Navbar';
+import ChromeDinoGame from 'react-chrome-dino';
 
 const AssignmentDetailsPage = () => {
   const { id } = useParams();
@@ -12,6 +13,7 @@ const AssignmentDetailsPage = () => {
   const { user } = useAuth();
   const [assignment, setAssignment] = useState(null);
   const [course, setCourse] = useState(null);
+  const [courseDet, setCourseDet] = useState(null);
   const [submission, setSubmission] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +26,11 @@ const AssignmentDetailsPage = () => {
         setAssignment(assignmentRes.data);
         if (assignmentRes.data) {
           const courseRes = await courseAPI.getById(assignmentRes.data.assignment_course_id);
+          const courseDetRes = await courseAPI.getDetails(assignmentRes.data.assignment_course_id);
           setCourse(courseRes.data);
+          setCourseDet(courseDetRes.data);
+          console.log(courseRes.data)
+          console.log(courseDetRes.data)
         }
         // Fetch submission data based on user role
         if (user.role === 'student') {
@@ -59,7 +65,6 @@ const AssignmentDetailsPage = () => {
         // Student submission
         res = await assignmentAPI.submit(id, selectedFile);
         setSubmission(res.data);
-        alert("Submission successful!");
       } else if (user.role === 'teacher') {
         // Teacher upload (solution or materials)
         res = await assignmentAPI.submitRef(id, selectedFile);
@@ -117,7 +122,7 @@ const AssignmentDetailsPage = () => {
                 <div className="mb-3">
                   <p><strong>Due Date:</strong> {formatDate(assignment.assignment_due_date)}</p>
                   <p><strong>Course:</strong> {course?.course_name}</p>
-                  <p><strong>Instructor:</strong> {course?.instructor || 'N/A'}</p>
+                  <p><strong>Instructor:</strong> {courseDet?.teacher_name || 'N/A'}</p>
                 </div>
 
                 <div className="mb-4">
@@ -138,19 +143,26 @@ const AssignmentDetailsPage = () => {
                   <h5>Course Information</h5>
                   <p className="mb-1">{course?.course_name}</p>
                   <p className="text-muted small">{course?.course_description}</p>
-                  <p className="mb-1"><strong>Instructor:</strong> {course?.course_teacher_id || 'N/A'}</p>
+                  <p className="mb-1"><strong>Instructor:</strong> {courseDet?.teacher_name || 'N/A'}</p>
                   <p className="mb-1"><strong>Code:</strong> {course?.course_name || 'N/A'}</p>
-                  <p className="mb-0"><strong>Students:</strong> {course?.students || 'N/A'}</p>
+                  <p className="mb-0"><strong>Students:</strong> {courseDet?.total_students || 'N/A'}</p>
                 </div>
 
                 {user.role === 'teacher' && (
                   <div>
-                    <h5>Submissions</h5>
+                    <h5>Amount of Student Submitted</h5>
                     <p className="mb-1">
-                      <strong>Submitted:</strong> {assignment.submissionCount || 0}/{assignment.totalStudents || 0}
+                    {courseDet &&
+                      `${courseDet.students.reduce((sum, s) => sum + (s.submitted_assignments > 0 ?? 1 : 0), 0)} / ${courseDet.total_students ?? 0}`}
                     </p>
-                    <p className="mb-0">
-                      <strong>Completion Rate:</strong> {Math.round(((assignment.submissionCount || 0) / (assignment.totalStudents || 1)) * 100)}%
+                    <h5 className="mt-3">Total Submissions</h5>
+                      {courseDet &&
+                        `${courseDet.students.reduce((sum, s) => sum + (s.submitted_assignments), 0)}`}
+                    <p className="mb-0 my-3">
+                      <strong>Completion Rate: </strong>
+                        {courseDet && courseDet.students ?
+                          Math.round((courseDet.students.reduce((sum, s) => sum + (s.submitted_assignments > 0 ?? 1 : 0), 0) /
+                          (courseDet.total_students * courseDet.total_assignments)) * 100) || 0 : 0}%
                     </p>
                   </div>
                 )}
@@ -160,14 +172,13 @@ const AssignmentDetailsPage = () => {
         </Row>
         <Row className="mb-4 my-4">
           <Col>
-            <Card>
                 {user.role === 'student' ? (
                   <>
-                    {!submission ? (
+                    <Card>
                       <Form onSubmit={handleFormSubmit}>
                         <Form.Group controlId="formFile" className="mb-3">
-                          <Form.Label><Card.Title>Upload your assignment submission</Card.Title></Form.Label>
-                          <Form.Control type="file" onChange={handleFileChange} />
+                          <Form.Label><Card.Title className="my-2 mx-2">Upload your assignment submission</Card.Title></Form.Label>
+                          <Form.Control type="file" onChange={handleFileChange} required/>
                           <Form.Text className="text-muted">
                             Submit your completed assignment for grading and feedback.
                           </Form.Text>
@@ -175,11 +186,32 @@ const AssignmentDetailsPage = () => {
                         <Button type="submit" disabled={isSubmitting || !selectedFile}>
                           {isSubmitting ? 'Submitting...' : 'Submit Assignment'}
                         </Button>
+                        {isSubmitting && !submission && (
+                          <div style={{ position: "relative" }}>
+                            <ChromeDinoGame gameOver={!isSubmitting} />
+                            {/* Cover the duplicate (if it appears) */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                background: "#faf4ed",
+                                position: "absolute",
+                                top: 150,
+                                left: 200,
+                                width: "60%",
+                                height: "50%",
+                                pointerEvents: "none",
+                              }}
+                            />
+                          </div>
+                        )}
                         {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
                       </Form>
-                    ) : (
+                    </Card>
+                    {submission ? (
+                    <Card className="my-4">
                       <div className="mb-4">
-                        <h5>Your Submission</h5>
+                        <Card.Title className="my-2 mx-2"><h4>Your Submission</h4></Card.Title>
                         <div className="bg-light p-3 rounded">
                           <p><strong>Submitted:</strong> {formatDate(submission.uploaded_at)}</p>
                           {submission.submission_status === 'graded' && (
@@ -187,10 +219,6 @@ const AssignmentDetailsPage = () => {
                               <p>
                                 <strong>Status:</strong>
                                 <Badge bg="success" className="ms-2">Graded</Badge>
-                              </p>
-                              <p>
-                                <strong>Grade:</strong>
-                                <Badge bg="primary" className="ms-2">{submission.ai_grade?.[0] || 'N/A'}%</Badge>
                               </p>
                                 {submission?.ai_feedback ? (
                                   <FeedbackDisplay feedback={JSON.parse(submission.ai_feedback)} />
@@ -201,15 +229,19 @@ const AssignmentDetailsPage = () => {
                           )}
                         </div>
                       </div>
+                      </Card>
+                    ) : (
+                    <> </>
                     )}
                   </>
                 ) : (
+                <Card className="my-4">
                   <Form onSubmit={handleFormSubmit}>
                     <Form.Group controlId="formFile" className="mb-3">
                       <Form.Label>
                         <Card.Title>Upload teaching materials</Card.Title>
                       </Form.Label>
-                      <Form.Control type="file" onChange={handleFileChange} />
+                      <Form.Control type="file" onChange={handleFileChange} required/>
                       <Form.Text className="text-muted">
                         Upload solution files, additional resources, or assignment materials.
                       </Form.Text>
@@ -219,8 +251,8 @@ const AssignmentDetailsPage = () => {
                     </Button>
                     {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
                   </Form>
+                </Card>
                 )}
-            </Card>
           </Col>
         </Row>
       </Container>
@@ -231,9 +263,16 @@ const AssignmentDetailsPage = () => {
 const FeedbackDisplay = ({ feedback }) => {
   if (!feedback) return <Alert variant="info">No feedback available yet.</Alert>;
 
+  console.log(feedback);
+
   const { overall_details, criteria, overall_evaluation } = feedback;
 
   return (
+    <div>
+    <p>
+      <strong>Grade:</strong>
+      <Badge bg="primary" className="ms-2">{overall_evaluation.total_mark / overall_evaluation.maxMark * 100|| 'N/A'}%</Badge>
+    </p>
     <Card className="mb-4 border-primary">
       <Card.Header className="bg-primary text-white">
         <h4 className="mb-0">Assignment Feedback</h4>
@@ -250,20 +289,20 @@ const FeedbackDisplay = ({ feedback }) => {
                 <h6>Total Score</h6>
                 <div className="d-flex align-items-center">
                   <div className="display-4 text-primary fw-bold me-3">
-                    {overall_evaluation.mark_out_of_20.toFixed(1)}
+                    {overall_evaluation.total_mark.toFixed(1)}
                   </div>
                   <div className="flex-grow-1">
                     <div className="progress" style={{ height: '20px' }}>
                       <div
                         className="progress-bar bg-success"
                         role="progressbar"
-                        style={{ width: `${(overall_evaluation.mark_out_of_20 / 20) * 100}%` }}
-                        aria-valuenow={overall_evaluation.mark_out_of_20}
+                        style={{ width: `${(overall_evaluation.total_mark / overall_evaluation.maxMark) * 100}%` }}
+                        aria-valuenow={overall_evaluation.total_mark}
                         aria-valuemin="0"
-                        aria-valuemax="20"
+                        aria-valuemax={overall_evaluation.maxMark}
                       ></div>
                     </div>
-                    <small className="text-muted">out of 20 points</small>
+                    <small className="text-muted">out of {overall_evaluation.maxMark} points</small>
                   </div>
                 </div>
               </div>
@@ -272,8 +311,8 @@ const FeedbackDisplay = ({ feedback }) => {
               <div className="p-3 bg-light rounded h-100">
                 <h6>Details</h6>
                 <ul className="list-unstyled">
-                  <li className="mb-2">
-                    <strong>Word Count:</strong> {overall_details.word_count}
+                  <li>
+                    <strong>Word Count:</strong> {overall_details.word_count || 'Not provided'}
                   </li>
                   <li>
                     <strong>Overall Idea:</strong> {overall_details.overall_idea || 'Not provided'}
@@ -294,14 +333,14 @@ const FeedbackDisplay = ({ feedback }) => {
               <div key={criterion} className="col-md-6 mb-3">
                 <Card className="h-100">
                   <Card.Header className="bg-light">
-                    <h6 className="mb-0">{criterion}</h6>
+                    <h6 className="mb-0">{details.criteria}</h6>
                   </Card.Header>
                   <Card.Body>
                     <div className="d-flex align-items-center mb-2">
                       <span className="badge bg-primary rounded-pill me-2">
                         {details.mark} pts
                       </span>
-                      <small className="text-muted">/ 5 possible</small>
+                      <small className="text-muted">/ {details.maxMark} possible</small>
                     </div>
                     <div className="mb-2">
                       <strong>Evidence:</strong>
@@ -318,6 +357,24 @@ const FeedbackDisplay = ({ feedback }) => {
           </div>
         </section>
 
+        {/* Borderline Decisions */}
+        {overall_evaluation.marker_notes?.borderline_decisions?.length > 0 && (
+          <section className="mb-4">
+            <h5 className="text-primary mb-3">
+              <i className="fas fa-scroll me-2"></i>Borderline Decisions
+            </h5>
+            <Card className="border-info">
+              <Card.Body className="bg-light-info">
+                <ul>
+                  {overall_evaluation.marker_notes.borderline_decisions.map((decision, index) => (
+                    <li key={index}>{decision}</li>
+                  ))}
+                </ul>
+              </Card.Body>
+            </Card>
+          </section>
+        )}
+
         {/* Feedback for Improvement */}
         <section>
           <h5 className="text-primary mb-3">
@@ -330,7 +387,7 @@ const FeedbackDisplay = ({ feedback }) => {
                   <i className="fas fa-lightbulb fa-2x"></i>
                 </div>
                 <div>
-                  <p className="mb-0">{overall_evaluation['feedback for improvement']}</p>
+                  <p className="mb-0">{overall_evaluation['feedback for improvement'] || 'No specific improvement feedback provided.'}</p>
                 </div>
               </div>
             </Card.Body>
@@ -338,9 +395,8 @@ const FeedbackDisplay = ({ feedback }) => {
         </section>
       </Card.Body>
     </Card>
+    </div>
   );
 };
-
-
 
 export default AssignmentDetailsPage;

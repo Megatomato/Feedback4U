@@ -79,7 +79,7 @@ const StudentDashboard = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     dueDate.setHours(0, 0, 0, 0);
-    
+
     const diffTime = dueDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
@@ -126,9 +126,6 @@ const StudentDashboard = () => {
                 "Here's your academic overview"
               )}
             </p>
-            {statistics && statistics.student_email && (
-              <small className="text-muted">{statistics.student_email}</small>
-            )}
           </Col>
         </Row>
       </div>
@@ -225,7 +222,7 @@ const StudentDashboard = () => {
                         </div>
                         {course.average_grade && (
                           <small className="text-success">
-                            Average Grade: {course.average_grade}%
+                            Average Grade: {course.average_grade}
                           </small>
                         )}
                       </div>

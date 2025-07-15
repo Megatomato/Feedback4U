@@ -6,10 +6,10 @@ export const CourseCard = ({ course, userRole, onClick }) => {
   // For teacher courses, we now have assignment_count and submission_count from the API
   const assignmentCount = course.assignment_count || 0;
   const submissionCount = course.submission_count || 0;
-  
+
   // Calculate completion rate based on submissions vs assignments (if assignments exist)
   const completionRate = assignmentCount > 0 ? Math.round((submissionCount / assignmentCount) * 100) : 0;
-  
+
   // For legacy support, keep old fields if they exist
   const students = course.students || 0; // Still hardcoded for now as requested
 
@@ -84,9 +84,6 @@ export const AssignmentCard = ({ assignment, courseName, onClick }) => {
         <div className="d-flex justify-content-between align-items-center mt-3">
           <small className="text-muted">
             Due: {formatDate(assignment.assignment_due_date)}
-          </small>
-          <small className="text-muted">
-            {submissionCount}/{totalStudents} submitted
           </small>
         </div>
       </Card.Body>

@@ -229,7 +229,7 @@ const TeacherCourseDetail = () => {
                               <td>
                                 {student.average_grade !== null ? (
                                   <Badge bg={student.average_grade >= 90 ? 'success' : student.average_grade >= 80 ? 'info' : student.average_grade >= 70 ? 'warning' : 'danger'}>
-                                    {student.average_grade.toFixed(1)}%
+                                    {student.average_grade.toFixed(1)}
                                   </Badge>
                                 ) : (
                                   <span className="text-muted">N/A</span>

@@ -8,7 +8,7 @@ function PricingSection() {
 
     const firstFeature = ["1 Teacher", "4 Classes per Teacher", "Up to 10 Students per Class"];
     const seconFeature = ["Up to 100 Teachers", "Up to 4 Class per Teacher", "Up to 35 Students per Class"]
-    const thirdFeature = ["Up to 250 Teachers", "Up to 6 Classes per Teacher", "Up to 250 per Class",
+    const thirdFeature = ["Up to 250 Teachers", "Up to 6 Classes per Teacher", "Up to 250 Students per Class",
                           "API access / supoort for custom workflows, UI or integration with custom systems",
                           "Add ons avaliable for more teachers, classes and students"]
     return (
@@ -27,13 +27,13 @@ function PricingSection() {
             marginBottom: "50px",
             }}>
             <Col>
-              <PricingCard name={"Home School Package"} desc={"Perfect for home schooling!"} price={"9.99"} features={firstFeature}/>
+              <PricingCard name={"Home School Package"} desc={"Perfect for home schooling!"} price={"14.99 / month"} features={firstFeature}/>
             </Col>
             <Col>
-              <PricingCardAlt name={"Mid Sized School"} desc={"A great package for the average sized school"} price={"59.99"} features={seconFeature}/>
+              <PricingCardAlt name={"Mid Sized School"} desc={"A great package for the average sized school"} price={"499.99 / month"} features={seconFeature}/>
             </Col>
             <Col>
-              <PricingCard name={"Large School / University"} desc={"Amazing for large schools or a starting point for universities"} price={"694.20"} features={thirdFeature}/>
+              <PricingCard name={"Large School / University"} desc={"Amazing for large schools or a starting point for universities"} price={"2,500+ / month"} features={thirdFeature}/>
             </Col>
           </Row>
         </div>
