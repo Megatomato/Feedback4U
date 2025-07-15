@@ -159,8 +159,9 @@ async def get_feedback(
         try:
             feedback_dict = json.loads(feedback_raw)
         except json.JSONDecodeError:
-            # fall back if the model produced plain text
-            feedback_dict = {"feedback": feedback_raw, "grades": []}
+            raise HTTPException(
+                status_code=400, detail="Wrong JSON formatting"
+            )
 
         return JSONResponse(content=feedback_dict)
 

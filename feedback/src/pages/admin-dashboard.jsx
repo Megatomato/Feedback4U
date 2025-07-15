@@ -14,7 +14,18 @@ import Modal from "react-bootstrap/Modal"
 import { AdminNav }  from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { ATable } from '../components/Data.jsx';
-import { AddTeacherForm, AddStudentForm, AddCourseForm, EnrollStudentForm } from '../components/Forms.jsx';
+import {
+    UnenrollStudentForm,
+    RemoveTeacherForm,
+    RemoveStudentForm,
+    EditCourseForm,
+    EditTeacherForm,
+    EditStudentForm,
+    AddTeacherForm,
+    AddStudentForm,
+    AddCourseForm,
+    EnrollStudentForm,
+} from '../components/Forms.jsx';
 
 const AdminDashPage = () => {
   const { user } = useAuth();
@@ -92,7 +103,13 @@ const AdminDashPage = () => {
                   studentForm={<AddStudentForm/>}
                   teacherForm={<AddTeacherForm/>}
                   courseForm={<AddCourseForm/>}
+                  editStudentForm={<EditStudentForm/>}
+                  removeStudentForm={<RemoveStudentForm/>}
+                  removeTeacherForm={<RemoveTeacherForm/>}
+                  editTeacherForm={<EditTeacherForm/>}
+                  editCourseForm={<EditCourseForm/>}
                   enrollForm={<EnrollStudentForm/>}
+                  unenrollForm={<UnenrollStudentForm/>}
                 />
               </Col>
             </Row>
@@ -107,7 +124,19 @@ const AdminDashPage = () => {
     );
 };
 
-function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm }) {
+function ManagementButtons(
+    {   studentForm,
+        teacherForm,
+        courseForm,
+        editStudentForm,
+        removeStudentForm,
+        removeTeacherForm,
+        editTeacherForm,
+        editCourseForm,
+        enrollForm,
+        unenrollForm,
+
+    }) {
   const [activeModal, setActiveModal] = useState(null);
 
   const handleClose = () => setActiveModal(null);
@@ -143,7 +172,7 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
               <Button variant="primary" onClick={() => handleShow('enrollStudent')} className="mb-2">
                 Enroll Student in Course
               </Button>
-              <Button variant="outline-primary" onClick={() => handleShow('enrollStudent')} className="mb-2">
+              <Button variant="outline-primary" onClick={() => handleShow('unenrollStudent')} className="mb-2">
                 Unenroll Student in Course
               </Button>
             </ButtonGroup>
@@ -171,7 +200,7 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
           <Modal.Title>Edit Student Information</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {studentForm}
+          {editStudentForm}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
@@ -200,7 +229,7 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
           <Modal.Title>Edit Teacher Information</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {teacherForm}
+          {editTeacherForm}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
@@ -229,7 +258,7 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
           <Modal.Title>Edit Course Information</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {courseForm}
+          {editCourseForm}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
@@ -245,6 +274,21 @@ function ManagementButtons({ studentForm, teacherForm, courseForm, enrollForm })
         </Modal.Header>
         <Modal.Body>
           {enrollForm}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+    {/* Enrollment Modal */}
+      <Modal show={activeModal === 'unenrollStudent'} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Enroll Student in Course</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {unenrollForm}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>

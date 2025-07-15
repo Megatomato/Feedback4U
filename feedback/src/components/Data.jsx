@@ -44,28 +44,7 @@ function ATable(props) {
                 </Row></Col>
               </td>
               <td className="text-center">
-                <Col>
-                  <Row className="text-center">
-                    <small className="text-muted">
-                      Teacher: {row.teacher_name || 'Unknown'}
-                    </small>
-                  </Row>
-                  <Row>
-                    <div>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      style={{width:"20vw"}}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("Change teacher clicked for course:", row.course_id)
-                      }}
-                    >
-                      Change Assigned Teacher
-                    </Button>
-                    </div>
-                  </Row>
-                </Col>
+                Teacher: {row.teacher_name || 'Unknown'}
               </td>
             </tr>
           ))}

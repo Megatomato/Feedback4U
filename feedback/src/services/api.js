@@ -118,6 +118,8 @@ export const studentAPI = {
 export const teacherAPI = {
   getAll: () => api.get('/teachers'),
   getById: (id) => api.get(`/teachers/${id}`),
+  update: (id, data) => api.put(`/teachers/${id}`, data),
+  delete: (id) => api.delete(`/teachers/${id}`),
   getCourses: () => api.get('/teacher/courses'),
   getStatistics: () => api.get('/teacher/statistics'),
 };
@@ -125,6 +127,8 @@ export const teacherAPI = {
 // Admin API calls
 export const adminAPI = {
   getAll: () => api.get('/admins'),
+  update: (id, data) => api.put(`/admins/${id}`, data),
+  delete: (id) => api.delete(`/admins/${id}`),
   getSchoolStatistics: () => api.get('/admin/statistics'), // Get statistics for admin's school
 };
 

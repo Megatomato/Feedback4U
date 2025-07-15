@@ -312,9 +312,6 @@ const FeedbackDisplay = ({ feedback }) => {
                 <h6>Details</h6>
                 <ul className="list-unstyled">
                   <li>
-                    <strong>Word Count:</strong> {overall_details.word_count || 'Not provided'}
-                  </li>
-                  <li>
                     <strong>Overall Idea:</strong> {overall_details.overall_idea || 'Not provided'}
                   </li>
                 </ul>
@@ -327,13 +324,13 @@ const FeedbackDisplay = ({ feedback }) => {
         <section className="mb-4">
           <h5 className="text-primary mb-3">
             <i className="fas fa-clipboard-check me-2"></i>Criteria Breakdown
-          </h5>
+          </h5>ERROR] Error getting feedback: 400: Wrong JSON formatting
           <div className="row">
             {Object.entries(criteria).map(([criterion, details]) => (
               <div key={criterion} className="col-md-6 mb-3">
                 <Card className="h-100">
                   <Card.Header className="bg-light">
-                    <h6 className="mb-0">{details.criteria}</h6>
+                    <h6 className="mb-0">{details.name}</h6>
                   </Card.Header>
                   <Card.Body>
                     <div className="d-flex align-items-center mb-2">

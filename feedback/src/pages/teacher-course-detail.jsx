@@ -130,7 +130,7 @@ const TeacherCourseDetail = () => {
               <Card.Body>
                 <h3 className="text-primary">
                   {courseDetails.students ?
-                    Math.round((courseDetails.students.reduce((sum, s) => sum + s.submitted_assignments, 0) /
+                    Math.round((courseDetails.students.reduce((sum, s) => sum + s.submitted_assignments > 0 ? 1 : 0, 0) /
                     (courseDetails.students.length * courseDetails.total_assignments)) * 100) || 0 : 0}%
                 </h3>
                 <p className="text-muted mb-0">Completion Rate</p>

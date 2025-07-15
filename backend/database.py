@@ -264,7 +264,8 @@ class CourseWithStatsResponse(BaseModel):
     course_is_active: bool
     course_teacher_id: int
     assignment_count: int
-    submission_count: int
+    total_students: int
+    total_submissions: int
 
     class Config:
         from_attributes = True

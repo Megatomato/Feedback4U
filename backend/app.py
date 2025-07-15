@@ -891,6 +891,11 @@ def get_teacher_courses(current_user=Depends(get_current_user), db: Session = De
             db.query(Assignment).filter(Assignment.assignment_course_id == course.course_id).count()
         )
 
+        # Count total enrolled students for this course
+        total_students = (
+            db.query(Enrollment).filter(Enrollment.course_id == course.course_id).count()
+        )
+
         # Count submissions for assignments in this course
         try:
             assignment_ids = (
@@ -898,13 +903,13 @@ def get_teacher_courses(current_user=Depends(get_current_user), db: Session = De
                 .filter(Assignment.assignment_course_id == course.course_id)
                 .subquery()
             )
-            submission_count = (
+            total_submissions = (
                 db.query(SubmittedAssignment)
                 .filter(SubmittedAssignment.submitted_assignment_assignment_id.in_(assignment_ids))
                 .count()
             )
         except:
-            submission_count = 0
+            total_submissions = 0
 
         result.append(
             CourseWithStatsResponse(
@@ -914,7 +919,8 @@ def get_teacher_courses(current_user=Depends(get_current_user), db: Session = De
                 course_is_active=course.course_is_active,
                 course_teacher_id=course.course_teacher_id,
                 assignment_count=assignment_count,
-                submission_count=submission_count,
+                total_students=total_students,
+                total_submissions=total_submissions,
             )
         )
 

@@ -3,7 +3,7 @@ import { Card, Badge, ProgressBar } from 'react-bootstrap';
 import { formatDate, getDaysUntilDue, getStatusBadge } from '../utils/helpers';
 
 export const CourseCard = ({ course, userRole, onClick }) => {
-  // For teacher courses, we now have assignment_count and submission_count from the API
+  // For teacher courses, we now have assignment_count, total_students, and total_submissions from the API
   const assignmentCount = course.assignment_count || 0;
   const submissionCount = course.submission_count || 0;
 
@@ -12,6 +12,8 @@ export const CourseCard = ({ course, userRole, onClick }) => {
 
   // For legacy support, keep old fields if they exist
   const students = course.students || 0; // Still hardcoded for now as requested
+  const totalSubmissions = course.total_submissions || course.submission_count || 0; // Support both field names
+  const totalStudents = course.total_students || course.students || 0;
 
   return (
     <Card className="h-100 course-card" onClick={onClick} style={{ cursor: 'pointer' }}>
@@ -24,7 +26,7 @@ export const CourseCard = ({ course, userRole, onClick }) => {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <div className="d-flex align-items-center">
             <i className="bi bi-people me-1"></i>
-            <small>{students} students</small>
+            <small>{totalStudents} students</small>
           </div>
           <div className="d-flex align-items-center">
             <i className="bi bi-file-text me-1"></i>
@@ -35,7 +37,7 @@ export const CourseCard = ({ course, userRole, onClick }) => {
         <div className="mb-3">
           <div className="d-flex justify-content-between">
             <small className="text-muted">Submissions</small>
-            <small className="text-muted">{submissionCount} total</small>
+            <small className="text-muted">{totalSubmissions} total</small>
           </div>
           <div className="d-flex justify-content-between">
             <small className="text-muted">Status</small>

@@ -8,6 +8,446 @@ import { authAPI, courseAPI, enrollmentAPI, studentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useAdminId } from '../context/AdminProviders';
 
+function UnenrollStudentForm({ onUnenroll }) {
+  const [formData, setFormData] = useState({
+    school_student_id: "",
+    course_code: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validated, setValidated] = useState(false);
+  const [enrollmentDetails, setEnrollmentDetails] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear any existing enrollment details when fields change
+    if (enrollmentDetails) setEnrollmentDetails(null);
+    if (error) setError(null);
+  };
+
+  const fetchEnrollmentDetails = async () => {
+    try {
+      const response = await enrollmentAPI.getBySchoolIdAndCourse(
+        formData.school_student_id,
+        formData.course_code
+      );
+      setEnrollmentDetails(response.data);
+      setError(null);
+    } catch (err) {
+      setEnrollmentDetails(null);
+      setError(err.response?.data?.detail || 'Enrollment not found. Please check the student ID and course code.');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    // If we don't have enrollment details yet, fetch them first
+    if (!enrollmentDetails) {
+      await fetchEnrollmentDetails();
+      return;
+    }
+
+    // Proceed with unenrollment
+    setIsSubmitting(true);
+    try {
+      await enrollmentAPI.delete(
+        formData.school_student_id,
+        formData.course_code
+      );
+      onUnenroll({
+        studentId: formData.school_student_id,
+        courseCode: formData.course_code
+      });
+    } catch (error) {
+      console.error('Unenrollment error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Unenrollment failed';
+      setError('Unenrollment failed: ' + errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Form noValidate validated={validated} onSubmit={handleSubmit}>
+      <Form.Group controlId="school_student_id" className="mb-3">
+        <Form.Label>Student School ID</Form.Label>
+        <Form.Control
+          required
+          type="text"
+          name="school_student_id"
+          value={formData.school_student_id}
+          onChange={handleChange}
+          placeholder="Enter student's school ID"
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide a student ID.
+        </Form.Control.Feedback>
+      </Form.Group>
+
+      <Form.Group controlId="course_code" className="mb-3">
+        <Form.Label>Course Code</Form.Label>
+        <Form.Control
+          required
+          type="text"
+          name="course_code"
+          value={formData.course_code}
+          onChange={handleChange}
+          placeholder="Enter course code"
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide a course code.
+        </Form.Control.Feedback>
+      </Form.Group>
+
+      {error && (
+        <Alert variant="danger" className="mb-3">
+          {error}
+        </Alert>
+      )}
+
+      {enrollmentDetails && (
+        <Alert variant="info" className="mb-3">
+          <p>
+            Found enrollment: <strong>{enrollmentDetails.student_name}</strong> (ID: {formData.school_student_id}) in <strong>{enrollmentDetails.course_name}</strong> (Code: {formData.course_code})
+          </p>
+        </Alert>
+      )}
+
+      <div className="d-grid gap-2 mt-4">
+        <Button
+          variant={enrollmentDetails ? "warning" : "primary"}
+          type="submit"
+          size="lg"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Processing...' :
+           enrollmentDetails ? 'Confirm Unenrollment' : 'Find Enrollment'}
+        </Button>
+      </div>
+    </Form>
+  );
+}
+
+
+
+function EditCourseForm({ course, onUpdate }) {
+  const [formData, setFormData] = useState({
+    name: course?.name || "",
+    description: course?.description || "",
+    teacher_email: course?.teacher_email || ""
+  });
+
+  const [validated, setValidated] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await courseAPI.update(course.course_id, formData);
+      onUpdate(result.data);
+    } catch (error) {
+      console.error('Update error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Update failed';
+      alert('Update failed: ' + errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Form noValidate validated={validated} onSubmit={handleSubmit}>
+      <Form.Group controlId="name" className="mb-3">
+        <Form.Label>Course Name / Code</Form.Label>
+        <Form.Control
+          required
+          type="text"
+          placeholder="CSSE6400"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide the course's name.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <Form.Group controlId="description" className="mb-3">
+        <Form.Label>Description</Form.Label>
+        <Form.Control
+          type="description"
+          placeholder="Software Architecture"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide a description.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <Form.Group controlId="teacher_email" className="mb-3">
+        <Form.Label>Teacher Email</Form.Label>
+        <Form.Control
+          type="email"
+          placeholder="teacher@uq.edu.au"
+          name="teacher_email"
+          value={formData.teacher_email}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide the email of the teacher.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <div className="d-grid gap-2 mt-4">
+        <Button
+          variant="primary"
+          type="submit"
+          size="lg"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Updating...' : 'Update Course'}
+        </Button>
+      </div>
+    </Form>
+  );
+}
+
+function EditTeacherForm({ teacher, onUpdate }) {
+  const [formData, setFormData] = useState({
+    name: teacher?.name || "",
+    email: teacher?.email || "",
+    phoneNumber: teacher?.phoneNumber || ""
+  });
+
+  const [validated, setValidated] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await authAPI.updateTeacher(teacher.id, formData);
+      onUpdate(result.data);
+    } catch (error) {
+      console.error('Update error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Update failed';
+      alert('Update failed: ' + errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Form noValidate validated={validated} onSubmit={handleSubmit}>
+      <Form.Group controlId="name" className="mb-3">
+        <Form.Label>Full Name</Form.Label>
+        <Form.Control
+          required
+          type="text"
+          placeholder="Richard Thomas"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide the teacher's name.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <Form.Group controlId="email" className="mb-3">
+        <Form.Label>Email Address</Form.Label>
+        <Form.Control
+          type="email"
+          placeholder="john@uq.edu.au"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide a valid email.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <Form.Group controlId="phoneNumber" className="mb-3">
+        <Form.Label>Phone Number</Form.Label>
+        <Form.Control
+          type="tel"
+          placeholder="0433823736"
+          name="phoneNumber"
+          value={formData.phoneNumber}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide a valid phone number.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <div className="d-grid gap-2 mt-4">
+        <Button
+          variant="primary"
+          type="submit"
+          size="lg"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Updating...' : 'Update Teacher'}
+        </Button>
+      </div>
+    </Form>
+  );
+}
+
+function EditStudentForm({ student, onUpdate }) {
+  const [formData, setFormData] = useState({
+    id: student?.id || "",
+    name: student?.name || "",
+    email: student?.email || "",
+    phoneNumber: student?.phoneNumber || ""
+  });
+
+  const [validated, setValidated] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await authAPI.updateStudent(student.id, formData);
+      onUpdate(result.data);
+    } catch (error) {
+      console.error('Update error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Update failed';
+      alert('Update failed: ' + errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Form noValidate validated={validated} onSubmit={handleSubmit}>
+      <Form.Group controlId="id" className="mb-3">
+        <Form.Label>Student ID</Form.Label>
+        <Form.Control
+          required
+          type="text"
+          placeholder="47439511"
+          name="id"
+          value={formData.id}
+          onChange={handleChange}
+        />
+      </Form.Group>
+      <Form.Group controlId="name" className="mb-3">
+        <Form.Label>Full Name</Form.Label>
+        <Form.Control
+          type="text"
+          placeholder="Richard Thomas"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide the student's name.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <Form.Group controlId="phoneNumber" className="mb-3">
+        <Form.Label>Phone Number</Form.Label>
+        <Form.Control
+          type="tel"
+          placeholder="0433823736"
+          name="phoneNumber"
+          value={formData.phoneNumber}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide a valid phone number.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <Form.Group controlId="email" className="mb-3">
+        <Form.Label>Email Address</Form.Label>
+        <Form.Control
+          type="email"
+          placeholder="john@uq.edu.au"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide a valid email.
+        </Form.Control.Feedback>
+      </Form.Group>
+      <div className="d-grid gap-2 mt-4">
+        <Button
+          variant="primary"
+          type="submit"
+          size="lg"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Updating...' : 'Update Student'}
+        </Button>
+      </div>
+    </Form>
+  );
+}
+
+
 function AddStudentForm() {
   const [formData, setFormData] = useState({
     id: "",
@@ -712,4 +1152,4 @@ function EnrollStudentForm() {
   );
 }
 
-export { AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal, EnrollStudentForm };
+export {  UnenrollStudentForm, RemoveTeacherForm, RemoveStudentForm, EditCourseForm, EditTeacherForm, EditStudentForm, AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal, EnrollStudentForm };
