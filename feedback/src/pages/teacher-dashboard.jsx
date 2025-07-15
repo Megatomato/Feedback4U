@@ -199,8 +199,12 @@ const TeacherDashboard = () => {
                           <span className="small fw-bold">{course.assignment_count}</span>
                         </div>
                         <div className="d-flex justify-content-between">
+                          <span className="small">Students:</span>
+                          <span className="small fw-bold">{course.total_students}</span>
+                        </div>
+                        <div className="d-flex justify-content-between">
                           <span className="small">Submissions:</span>
-                          <span className="small fw-bold">{course.submission_count}</span>
+                          <span className="small fw-bold">{course.total_submissions}</span>
                         </div>
                         <div className="d-flex justify-content-between">
                           <span className="small">Status:</span>
