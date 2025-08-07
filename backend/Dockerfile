@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application's code into the container
 COPY . .
 
-# Set the python path to include the app directory
-ENV PYTHONPATH "${PYTHONPATH}:/app"
+# Set the python path to include the app directory and the RAG directory
+ENV PYTHONPATH "${PYTHONPATH}:/app:/app/RAG"
 
 # Command to run the application
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

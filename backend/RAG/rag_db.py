@@ -282,8 +282,10 @@ class EmbeddingModel:
 def run_chunker(file_path: str, strategy: str) -> List[str]:
     if strategy == "recursive" and recursive_chunker:
         return recursive_chunker(file_path)
-    if strategy == "semantic" and semantic_chunker:
-        return semantic_chunker(file_path)
+    # Placeholder for semantic chunker - assuming it will be implemented
+    # if strategy == "semantic" and semantic_chunker:
+    #     return semantic_chunker(file_path)
+    return []
 
 
 # ---------------------------------------------------------------------
