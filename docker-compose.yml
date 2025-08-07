@@ -11,6 +11,7 @@ services:
       - "${DB_PORT:-8081}:5432"
     volumes:
       - user-data-pgdata:/var/lib/postgresql/data
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/init.sql
 
   postgres-rag:
     image: pgvector/pgvector:pg16
@@ -76,6 +77,26 @@ services:
           target: /app
           ignore:
             - node_modules
+
+  rag_api:
+    build:
+      context: ./backend
+      dockerfile: RAG/Dockerfile
+    container_name: rag_api
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - DATABASE_URL=postgresql://user:password@rag-postgres:5432/rag_db
+    depends_on:
+      - postgres-rag
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/RAG
+          target: /app
+          ignore:
+            - venv
 
 volumes:
   user-data-pgdata:
