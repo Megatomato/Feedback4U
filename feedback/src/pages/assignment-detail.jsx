@@ -265,13 +265,24 @@ const FeedbackDisplay = ({ feedback }) => {
 
   console.log(feedback);
 
-  const { overall_details, criteria, overall_evaluation } = feedback;
+  const { overall_details = {}, criteria = [], overall_evaluation = {} } = feedback;
+  const safeFixed = (v, digits = 1) => {
+    const n = parseFloat(v);
+    return !isNaN(n) && isFinite(n) ? n.toFixed(digits) : '0.0';
+  };
+  const totalMarkRaw = overall_evaluation?.mark_out_of_20 ?? overall_evaluation?.total_mark;
+  const totalMark = parseFloat(totalMarkRaw);
+  const maxMark = parseFloat(overall_evaluation?.maxMark ?? 20);
+  const percent = !isNaN(totalMark) && !isNaN(maxMark) && maxMark > 0 ? Math.round((totalMark / maxMark) * 100) : 0;
+  const criteriaList = Array.isArray(criteria)
+    ? criteria
+    : Object.values(criteria || {});
 
   return (
     <div>
     <p>
       <strong>Grade:</strong>
-      <Badge bg="primary" className="ms-2">{overall_evaluation.total_mark / overall_evaluation.maxMark * 100|| 'N/A'}%</Badge>
+      <Badge bg="primary" className="ms-2">{percent}%</Badge>
     </p>
     <Card className="mb-4 border-primary">
       <Card.Header className="bg-primary text-white">
@@ -289,17 +300,17 @@ const FeedbackDisplay = ({ feedback }) => {
                 <h6>Total Score</h6>
                 <div className="d-flex align-items-center">
                   <div className="display-4 text-primary fw-bold me-3">
-                    {overall_evaluation.total_mark.toFixed(1)}
+                    {safeFixed(totalMark, 1, '0.0')}
                   </div>
                   <div className="flex-grow-1">
                     <div className="progress" style={{ height: '20px' }}>
                       <div
                         className="progress-bar bg-success"
                         role="progressbar"
-                        style={{ width: `${(overall_evaluation.total_mark / overall_evaluation.maxMark) * 100}%` }}
-                        aria-valuenow={overall_evaluation.total_mark}
+                        style={{ width: `${percent}%` }}
+                        aria-valuenow={totalMark}
                         aria-valuemin="0"
-                        aria-valuemax={overall_evaluation.maxMark}
+                        aria-valuemax={maxMark}
                       ></div>
                     </div>
                     <small className="text-muted">out of {overall_evaluation.maxMark} points</small>
@@ -324,13 +335,13 @@ const FeedbackDisplay = ({ feedback }) => {
         <section className="mb-4">
           <h5 className="text-primary mb-3">
             <i className="fas fa-clipboard-check me-2"></i>Criteria Breakdown
-          </h5>ERROR] Error getting feedback: 400: Wrong JSON formatting
+           </h5>
           <div className="row">
-            {Object.entries(criteria).map(([criterion, details]) => (
-              <div key={criterion} className="col-md-6 mb-3">
+            {criteriaList.map((details, idx) => (
+              <div key={details.criterion || details.name || idx} className="col-md-6 mb-3">
                 <Card className="h-100">
                   <Card.Header className="bg-light">
-                    <h6 className="mb-0">{details.name}</h6>
+                    <h6 className="mb-0">{details.criterion || details.name || 'Criterion'}</h6>
                   </Card.Header>
                   <Card.Body>
                     <div className="d-flex align-items-center mb-2">
@@ -384,7 +395,7 @@ const FeedbackDisplay = ({ feedback }) => {
                   <i className="fas fa-lightbulb fa-2x"></i>
                 </div>
                 <div>
-                  <p className="mb-0">{overall_evaluation['feedback for improvement'] || 'No specific improvement feedback provided.'}</p>
+                  <p className="mb-0">{overall_evaluation.feedback_for_improvement || overall_evaluation['feedback for improvement'] || 'No specific improvement feedback provided.'}</p>
                 </div>
               </div>
             </Card.Body>
