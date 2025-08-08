@@ -50,6 +50,9 @@ services:
       - DB_DATABASE=postgres
       - DB_PORT=5432
       - DB_HOST=postgres-user
+      - RAG_API_URL=http://rag_api:8082
+      - RAG_EMBEDDER=${RAG_EMBEDDER:-gitee}
+      - RAG_PROVIDER=${RAG_PROVIDER:-gemini}
     depends_on:
       - postgres-user
       - postgres-rag
@@ -88,6 +91,8 @@ services:
       - "8082:8082"
     environment:
       - DATABASE_URL=postgresql://user:password@rag-postgres:5432/rag_db
+    env_file:
+      - ./backend/RAG/.env
     depends_on:
       - postgres-rag
     develop:

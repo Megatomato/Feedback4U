@@ -35,7 +35,8 @@ class LLM:
             self.model = "gpt-4.1"
         elif provider == "gemini":
             genai.configure(api_key=GEMINI_API_KEY)
-            self.model = genai.GenerativeModel("gemini-1.5-flash-latest")
+            # Use Gemini 2.5 Pro (reasoning-capable)
+            self.model = genai.GenerativeModel("gemini-2.5-pro")
         elif provider == "gitee":
             self.model = "Qwen3-235B-A22B"
             self.api_url = "https://ai.gitee.com/api/v1/chat/completions"
@@ -61,20 +62,21 @@ class LLM:
                 elif msg["role"] == "assistant":
                     gemini_messages.append({"role": "model", "parts": [msg["content"]]})
                 else:
-                    gemini_messages.append({"role": msg["role"], "parts": [msg["content"]]})
+                    # Map non-assistant messages to user role per Gemini SDK expectations
+                    gemini_messages.append({"role": "user", "parts": [msg["content"]]})
 
             generation_config = genai.types.GenerationConfig(temperature=0.2)
 
+            # Older versions of google-generativeai do not support system_instruction.
+            # Inline the system prompt as the first user message to preserve behavior.
             if system_prompt:
-                response = self.model.generate_content(
-                    gemini_messages,
-                    generation_config=generation_config,
-                    system_instruction=system_prompt,
+                gemini_messages = (
+                    [{"role": "user", "parts": [system_prompt]}] + gemini_messages
                 )
-            else:
-                response = self.model.generate_content(
-                    gemini_messages, generation_config=generation_config
-                )
+
+            response = self.model.generate_content(
+                gemini_messages, generation_config=generation_config
+            )
             return response.text
         elif self.provider == "gitee":
             headers = {
