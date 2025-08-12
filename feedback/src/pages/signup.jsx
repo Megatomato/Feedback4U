@@ -59,7 +59,8 @@ const SignupPage = () => {
     } catch (error) {
       console.error('Signup error:', error);
       // Show error to user
-      alert('Registration failed: ' + error.message);
+      const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
+      alert('Registration failed: ' + errorMessage);
     } finally {
       setIsSubmitting(false);
     }

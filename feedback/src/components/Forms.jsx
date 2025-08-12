@@ -1152,4 +1152,4 @@ function EnrollStudentForm() {
   );
 }
 
-export {  UnenrollStudentForm, RemoveTeacherForm, RemoveStudentForm, EditCourseForm, EditTeacherForm, EditStudentForm, AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal, EnrollStudentForm };
+export {  UnenrollStudentForm, EditCourseForm, EditTeacherForm, EditStudentForm, AddStudentForm, AddTeacherForm, AddCourseForm, AssignmentModal, EnrollStudentForm };

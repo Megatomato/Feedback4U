@@ -10,21 +10,32 @@ You should output the advice in a JSON format. This format should be as follows:
     "word_count": 0,
     "overall_idea": ""
   },
-  "criteria": [
-    "criteria-1": {
+  "criteria": {
+    "Formulate": {
       "mark": 0,
       "maxMark": 0,
       "evidence": "",
       "justification": ""
     },
-    "criteria-2": {
+    "Solve": {
       "mark": 0,
       "maxMark": 0,
       "evidence": "",
       "justification": ""
     },
-    ...
-  ],
+    "Evaluate and verify": {
+      "mark": 0,
+      "maxMark": 0,
+      "evidence": "",
+      "justification": ""
+    },
+    "Communicate": {
+      "mark": 0,
+      "maxMark": 0,
+      "evidence": "",
+      "justification": ""
+    }
+  },
   "overall_evaluation": {
     "total_mark": 0,
     "maxMark": 0,
@@ -36,7 +47,5 @@ You should output the advice in a JSON format. This format should be as follows:
 }
 
 After you have outputed the feedback in this format, ensure that it is a proper JSON that can be parsed. Retrace your logic and ensure the JSON is correct semantically.
-
-criteria should be a JSON array containing the criteria given, criteria-1 and criteria-2 should be replaced with the name of the criteria, and there can be any number of criteria.
 
 If this JSON format is wrong I will murder 1 kitten per error, so DO NOT MAKE ANY ERRORS OR KITTENS WILL DIE.

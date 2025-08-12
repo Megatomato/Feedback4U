@@ -141,9 +141,14 @@ const TeacherCourseDetail = () => {
             <Card className="text-center">
               <Card.Body>
                 <h3 className="text-primary">
-                  {courseDetails.students ?
-                    (courseDetails.students.filter(s => s.average_grade !== null).reduce((sum, s) => sum + (s.average_grade || 0), 0) /
-                    courseDetails.students.filter(s => s.average_grade !== null).length || 0).toFixed(1) : 'N/A'}
+                  {(() => {
+                    if (!courseDetails.students || courseDetails.students.length === 0) return 'N/A';
+                    const grads = courseDetails.students.filter(s => typeof s.average_grade === 'number' && Number.isFinite(s.average_grade));
+                    if (grads.length === 0) return 'N/A';
+                    const sum = grads.reduce((acc, s) => acc + Number(s.average_grade || 0), 0);
+                    const avg = sum / grads.length;
+                    return Number.isFinite(avg) ? avg.toFixed(1) : 'N/A';
+                  })()}
                 </h3>
                 <p className="text-muted mb-0">Average Grade</p>
               </Card.Body>
@@ -227,9 +232,9 @@ const TeacherCourseDetail = () => {
                                 </div>
                               </td>
                               <td>
-                                {student.average_grade !== null ? (
+                                {Number.isFinite(Number(student.average_grade)) ? (
                                   <Badge bg={student.average_grade >= 90 ? 'success' : student.average_grade >= 80 ? 'info' : student.average_grade >= 70 ? 'warning' : 'danger'}>
-                                    {student.average_grade.toFixed(1)}
+                                    {Number(student.average_grade).toFixed(1)}
                                   </Badge>
                                 ) : (
                                   <span className="text-muted">N/A</span>

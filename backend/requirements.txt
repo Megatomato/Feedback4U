@@ -3,6 +3,7 @@ fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
 python-multipart
 pydantic>=2.0
+httpx
 
 # --- Authentication ---
 python-jose[cryptography]>=3.3
@@ -12,6 +13,26 @@ email-validator>=2.0
 # --- Database / vector search ---
 sqlalchemy>=2.0
 psycopg2-binary>=2.9
+pgvector>=0.2
 
 # --- Password generation ---
 passwordgenerator>=1.4
+
+# --- LangChain ecosystem ---
+langchain
+langchain-community
+langchain-openai
+langchain-huggingface
+langchain-experimental
+
+# --- LLM / embedding providers ---
+openai>=1.0
+google-generativeai
+requests
+
+# --- PDF handling ---
+PyMuPDF
+pypdf
+
+# --- Utilities ---
+python-dotenv

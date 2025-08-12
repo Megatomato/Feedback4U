@@ -143,11 +143,6 @@ export const enrollmentAPI = {
 // Course API calls
 export const courseAPI = {
   create: (data) => {
-    const teacherId = parseInt(data.teacher_id);
-    if (isNaN(teacherId)) {
-      throw new Error('Teacher ID must be a valid number');
-    }
-
     const payload = {
       course_name: data.name,
       course_description: data.description,

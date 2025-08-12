@@ -152,16 +152,29 @@ async def get_feedback(
             provider=provider,
         )
 
-        # The feedback is stored as a JSON string in the DB, so we return it as such.
-        # For a cleaner API, it might be better to parse and return a JSON object.
-        # backend/RAG/rag_api.py
-
+        # The feedback is stored as a JSON string in the DB; parse and return a JSON object.
+        # If the model wrapped JSON in code fences, extract and parse.
         try:
             feedback_dict = json.loads(feedback_raw)
         except json.JSONDecodeError:
-            raise HTTPException(
-                status_code=400, detail="Wrong JSON formatting"
-            )
+            cleaned = feedback_raw.strip()
+            # Strip Markdown code fences if present
+            if cleaned.startswith("```") and cleaned.endswith("```"):
+                cleaned = cleaned.strip("`")  # remove all backticks
+                # Drop optional leading language label like 'json' on first line
+                parts = cleaned.split("\n", 1)
+                if len(parts) == 2 and parts[0].lower().startswith("json"):
+                    cleaned = parts[1]
+            else:
+                # Try to extract the largest JSON object substring
+                start = cleaned.find("{")
+                end = cleaned.rfind("}")
+                if start != -1 and end != -1 and end > start:
+                    cleaned = cleaned[start : end + 1]
+            try:
+                feedback_dict = json.loads(cleaned)
+            except Exception:
+                raise HTTPException(status_code=400, detail="Wrong JSON formatting")
 
         return JSONResponse(content=feedback_dict)
 

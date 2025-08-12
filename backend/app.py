@@ -1305,6 +1305,11 @@ async def submit_assignment(
         "course_id": str(assignment.assignment_course_id),
     }
 
+    # Pass through embedder/provider preferences to RAG API (defaults set in env)
+    rag_embedder = os.getenv("RAG_EMBEDDER", "gitee")
+    rag_provider = os.getenv("RAG_PROVIDER", "deepseek")
+    data.update({"embedder": rag_embedder, "provider": rag_provider})
+
     feedback_json = {}
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:

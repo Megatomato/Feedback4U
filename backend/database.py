@@ -26,7 +26,8 @@ USER = os.getenv("DB_USER", "postgres")
 PASSWORD = os.getenv("DB_PASSWORD", "postgres")
 DATABASE = os.getenv("DB_DATABASE", "postgres")
 
-DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@localhost:{PORT}/{DATABASE}"
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{DB_HOST}:{PORT}/{DATABASE}"
 engine = create_engine(
     DATABASE_URL,
     pool_size=int(os.getenv("DB_POOL_SIZE", 5)),

@@ -16,8 +16,6 @@ import Footer from '../components/Footer.jsx';
 import { ATable } from '../components/Data.jsx';
 import {
     UnenrollStudentForm,
-    RemoveTeacherForm,
-    RemoveStudentForm,
     EditCourseForm,
     EditTeacherForm,
     EditStudentForm,
@@ -104,8 +102,6 @@ const AdminDashPage = () => {
                   teacherForm={<AddTeacherForm/>}
                   courseForm={<AddCourseForm/>}
                   editStudentForm={<EditStudentForm/>}
-                  removeStudentForm={<RemoveStudentForm/>}
-                  removeTeacherForm={<RemoveTeacherForm/>}
                   editTeacherForm={<EditTeacherForm/>}
                   editCourseForm={<EditCourseForm/>}
                   enrollForm={<EnrollStudentForm/>}
@@ -129,8 +125,6 @@ function ManagementButtons(
         teacherForm,
         courseForm,
         editStudentForm,
-        removeStudentForm,
-        removeTeacherForm,
         editTeacherForm,
         editCourseForm,
         enrollForm,

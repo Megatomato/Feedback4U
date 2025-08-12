@@ -35,7 +35,8 @@ class LLM:
             self.model = "gpt-4.1"
         elif provider == "gemini":
             genai.configure(api_key=GEMINI_API_KEY)
-            self.model = genai.GenerativeModel("gemini-1.5-flash-latest")
+            # Use Gemini 2.5 Pro (reasoning-capable)
+            self.model = genai.GenerativeModel("gemini-2.5-pro")
         elif provider == "gitee":
             self.model = "Qwen3-235B-A22B"
             self.api_url = "https://ai.gitee.com/api/v1/chat/completions"
@@ -61,21 +62,86 @@ class LLM:
                 elif msg["role"] == "assistant":
                     gemini_messages.append({"role": "model", "parts": [msg["content"]]})
                 else:
-                    gemini_messages.append({"role": msg["role"], "parts": [msg["content"]]})
+                    # Map non-assistant messages to user role per Gemini SDK expectations
+                    gemini_messages.append({"role": "user", "parts": [msg["content"]]})
 
-            generation_config = genai.types.GenerationConfig(temperature=0.2)
+            # Enforce structured JSON output that matches backend expectations
+            json_schema = {
+                "type": "object",
+                "properties": {
+                    "overall_details": {
+                        "type": "object",
+                        "properties": {
+                            "word_count": {"type": "integer"},
+                            "overall_idea": {"type": "string"}
+                        },
+                        "required": ["word_count", "overall_idea"]
+                    },
+                    "criteria": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "criterion": {"type": "string"},
+                                "mark": {"type": "number"},
+                                "maxMark": {"type": "number"},
+                                "evidence": {"type": "string"},
+                                "justification": {"type": "string"}
+                            },
+                            "required": ["criterion", "mark", "maxMark", "evidence", "justification"]
+                        }
+                    },
+                    "overall_evaluation": {
+                        "type": "object",
+                        "properties": {
+                            "mark_out_of_20": {"type": "number"},
+                            "maxMark": {"type": "number"},
+                            "marker_notes": {
+                                "type": "object",
+                                "properties": {
+                                    "borderline_decisions": {
+                                        "type": "array",
+                                        "items": {"type": "string"}
+                                    }
+                                },
+                                "required": ["borderline_decisions"]
+                            },
+                            "feedback_for_improvement": {"type": "string"}
+                        },
+                        "required": ["mark_out_of_20", "maxMark"]
+                    }
+                },
+                "required": ["overall_details", "criteria", "overall_evaluation"]
+            }
 
+            generation_config = genai.types.GenerationConfig(
+                temperature=0.2,
+                max_output_tokens=8192,
+                response_mime_type="application/json",
+                response_schema=json_schema,
+            )
+
+            # Older versions of google-generativeai do not support system_instruction.
+            # Inline the system prompt as the first user message to preserve behavior.
             if system_prompt:
-                response = self.model.generate_content(
-                    gemini_messages,
-                    generation_config=generation_config,
-                    system_instruction=system_prompt,
+                gemini_messages = (
+                    [{"role": "user", "parts": [system_prompt]}] + gemini_messages
                 )
-            else:
-                response = self.model.generate_content(
-                    gemini_messages, generation_config=generation_config
-                )
-            return response.text
+
+            response = self.model.generate_content(
+                gemini_messages, generation_config=generation_config
+            )
+            # Extract robustly; response.text may be missing if blocked or structured
+            if getattr(response, "text", None):
+                return response.text
+            candidates = getattr(response, "candidates", []) or []
+            if candidates:
+                content = getattr(candidates[0], "content", None) or candidates[0]
+                parts = getattr(content, "parts", None) or []
+                for p in parts:
+                    if hasattr(p, "text") and p.text:
+                        return p.text
+            raise RuntimeError("Gemini returned no text")
         elif self.provider == "gitee":
             headers = {
                 "Authorization": f"Bearer {GITEE_API_KEY}",
