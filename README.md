@@ -1,94 +1,103 @@
-Summary Design Specification
+## Overview
+**Feedback4U** is a full‑stack platform for AI‑assisted, rubric‑aligned feedback between students and teachers. It ships with:
+- A **FastAPI** backend (authentication, courses, assignments, submissions, feedback)
+- A **React (CRA)** frontend (admin dashboard, auth, course/assignment views)
+- An optional **RAG service** for chunking/embedding reference material and tracking analytics
+- **Docker Compose** for one‑command local setup
 
-1 Introduction
+## Repository Layout
+```
+Feedback4U/
+├─ assets/                     # Static assets
+├─ backend/                    # Python API + RAG support
+│  ├─ app.py                   # FastAPI app (auth, CRUD, uploads, health)
+│  ├─ database.py              # SQLAlchemy models + Pydantic schemas
+│  ├─ schema.sql               # User/course/assignment/submission schema
+│  ├─ requirements.txt         # Backend dependencies
+│  ├─ docker-compose.yml       # (backend-local) Postgres + Adminer
+│  ├─ start.sh                 # uvicorn entry
+│  └─ RAG/                     # RAG microservice
+│     ├─ rag_db.py             # pgvector + embedding pipeline + stats
+│     ├─ rag_api.py            # (served by uvicorn in RAG/Dockerfile)
+│     ├─ requirements.txt      # RAG dependencies
+│     └─ Dockerfile            # RAG container
+├─ feedback/                   # React client (Create React App)
+│  ├─ src/                     # routes, pages, context, components
+│  └─ package.json
+├─ docker-compose.yml          # Full stack: DBs, backend, frontend, rag_api
+├─ flake.nix / flake.lock      # (optional) Nix development environment
+└─ start.sh                    # compose up
+```
 
-1.1 Purpose of Writing
-Explain the purpose of writing this summary design specification and identify the intended readers.
+## Features
+- Admin / Teacher / Student **auth** (JWT) and **role‑based** access
+- Course and assignment management; student enrollments
+- Submission upload with optional **RAG‑augmented** feedback
+- Stats/analytics scaffolding (student averages, distributions, worst‑criteria)
+- **Adminer** DB UI for quick inspection
 
-1.2 Background
-Explain: a. The name of the software system to be developed; b. List the task proposers, developers, users of this project, and the computing station (center) where the software will run.
+## Architecture (High Level)
+```
++-----------------+        HTTP/JSON         +-----------------+
+|  Frontend (CRA) | <----------------------> |  FastAPI API    |
+|  port 3000      |                          |  port 8000      |
++-----------------+                          +-----------------+
+                                                     |
+                                                     | SQL (users/courses/etc.)
+                                                     v
+                                              +---------------+
+                                              | Postgres user |
+                                              | port 8081->5432
+                                              +---------------+
 
-1.3 Definitions
-List the definitions of specialized terms used in this document and the original phrases of foreign acronyms.
+                     (Optional, for embeddings/analytics)
++------------------+         HTTP/JSON        +------------------+
+|  Frontend/API    | <----------------------> |  RAG API (8082)  |
++------------------+                          +------------------+
+                                                     |
+                                                     v
+                                              +---------------+
+                                              | Postgres RAG  |
+                                              | port 5432     |
+                                              +---------------+
+```
 
-1.4 References
-List relevant reference documents, such as: a. The approved plan task book or contract for this project, and the official approval documents from higher authorities; b. Other published documents belonging to this project; c. Documents and materials cited in various parts of this document, including software development standards to be used. List the titles, document numbers, publication dates, and publishing units of these documents, and explain the sources where these documents and materials can be obtained.
+## Tech Stack
+- **Backend:** Python 3.10+, FastAPI, SQLAlchemy, Pydantic v2, `python-jose`, `passlib`
+- **DB:** PostgreSQL; pgvector (RAG DB)
+- **Frontend:** React (Create React App), react‑bootstrap / MUI, react‑router
+- **RAG:** LangChain (OpenAI/HF/Gemini embeddings), PyMuPDF, pgvector
+- **Infra:** Docker Compose, Adminer (DB UI)
 
+## Prerequisites
+- **Docker & Docker Compose** (recommended)
+- Or, **Python 3.10+** and **Node 18+** for manual setup
 
-2 Overall Design
+---
 
-2.1 Requirement Specifications
-Explain the main input and output items of the system, as well as the functional and performance requirements for processing. For detailed explanations, please refer to Appendix C.
+## Quick Start (Docker Compose)
 
-2.2 Operating Environment
-Briefly explain the regulations on the operating environment of the system (including hardware environment and supporting environment). For detailed explanations, please refer to Appendix C.
+1) Clone and enter the repo:
+```bash
+git clone https://github.com/Megatomato/Feedback4U.git
+cd Feedback4U
+```
 
-2.3 Basic Design Concepts and Processing Flow
-Explain the basic design concepts and processing flow of the system, and use diagrams as much as possible.
+2) Start the full stack:
+```bash
+./start.sh             # or: docker compose up --build -d
+```
 
-2.4 Structure
-Illustrate the division of system elements (modules at all levels, subroutines, common programs, etc.) of the system in the form of a list and block diagrams. Briefly explain the identifier and function of each system element, and present the control and controlled relationships between elements hierarchically.
+3) Access services:
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:8000> (FastAPI docs at `/docs`)
+- Adminer (DB UI): <http://localhost:8080>
+- RAG API (optional): <http://localhost:8082>
 
-2.5 Relationship Between Functional Requirements and Programs
-
-This section uses a matrix diagram as follows to explain the allocation relationship between the realization of each functional requirement and each program block:
-
-Program 1      Program 2	……	Program n
-Functional Requirement 1	√			
-Functional Requirement 2		√		
-……				
-Functional Requirement n		√		√
-
-
-2.6 Manual Processing Procedures
-Explain the manual processing procedures that have to be included in the working process of the software system (if any).
-
-2.7 Unresolved Issues
-Explain the various issues that have not been resolved during the summary design process but are considered necessary to be solved before the system is completed by the designer.
-
-3 Interface Design
-
-3.1 User Interface
-Explain the commands to be provided to users, their syntax structures, and the response information of the software.
-
-3.2 External Interfaces
-Explain the arrangements for all interfaces between the system and the outside world, including the interface between software and hardware, and the interface relationship between the system and various supporting software.
-
-3.3 Internal Interfaces
-Explain the arrangements for interfaces between various system elements within the system.
-
-4 Operation Design
-
-4.1 Operation Module Combination
-
-Explain the various different operation module combinations caused by applying different external operation controls to the system, and describe the internal modules and supporting software that each operation goes through.
-
-4.2 Operation Control
-Explain the methods and operation steps for each type of external operation control.
-
-4.3 Operation Time
-Explain the time that each operation module combination will occupy various resources.
-
-5 System Data Structure Design
-
-5.1 Key Points of Logical Structure Design
-Provide the name, identifier of each data structure used in the system, as well as the identification, definition, length of each data item, record, file, and system within them, and their hierarchical or tabular interrelationships.
-
-5.2 Key Points of Physical Structure Design
-Provide the storage requirements, access methods, access units, physical access relationships (indexes, devices, storage areas), design considerations, and confidentiality conditions for each data item in each data structure used in the system.
-
-5.3 Relationship Between Data Structures and Programs
-Explain the forms of each data structure and accessing these data structures.
-
-6 System Error Handling Design
-
-6.1 Error Messages
-In the form of a list, explain the form, meaning, and processing method of the system output information when each possible error or fault occurs.
-
-6.2 Remedial Measures
-Explain the possible alternative measures after a fault occurs, including: a. Backup technology: Explain the backup technology to be adopted, the technology for establishing and starting the copy when the original system data is lost, for example, periodically recording disk information to tape is a backup technology for disk media; b. Degradation technology: Explain the backup technology to be adopted, using another system or method with slightly lower efficiency to obtain some parts of the required results, for example, the degradation technology of an automatic system can be manual operation and manual recording of data; c. Recovery and restart technology: Explain the recovery and restart technology to be used, the method to make the software resume execution from the fault point or restart the software from the beginning.
-
-6.3 System Maintenance Design
-Explain the arrangements made in the internal design of the program for the convenience of system maintenance, including the detection points and dedicated modules specially arranged in the program for system inspection and maintenance. The corresponding relationship between each program can be in the form of the following matrix diagram:
-
+> The root `docker-compose.yml` brings up:
+> - `postgres-user` (user/course/assignment DB, auto‑seeded by `backend/schema.sql`)
+> - `postgres-rag` (pgvector DB for embeddings/analytics)
+> - `backend` (FastAPI, port 8000)
+> - `frontend` (CRA dev server, port 3000)
+> - `rag_api` (RAG microservice, port 8082)
 
